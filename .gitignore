@@ -45,3 +45,5 @@ storage/temp/
 htmlcov/
 .pytest_cache/
 *.log
+
+ke_hoach_thesisai.md

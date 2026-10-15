@@ -1,4 +1,4 @@
-from typing import List, Union
+﻿from typing import List, Union
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
@@ -38,8 +38,12 @@ class Settings(BaseSettings):
     LLM_MODEL: str = "qwen2.5:7b"
     EMBEDDING_MODEL: str = "bge-m3"
 
-    # Storage paths
+    # Storage paths & Data Lifecycle (Privacy-First)
     STORAGE_DIR: str = str(Path(__file__).resolve().parent.parent.parent / "storage")
+    AUDIO_RETENTION_HOURS: int = 24
+    AUTO_DELETE_RAW_DOCS: bool = True
+    MAX_UPLOAD_SIZE_MB: int = 50
+    MAX_AUDIO_SIZE_MB: int = 10
 
     @property
     def documents_dir(self) -> Path:

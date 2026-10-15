@@ -92,15 +92,19 @@ flowchart TD
    ├── services/            # Logic nghiệp vụ (audio, doc, rag, llm, eval)
    └── storage/             # Quản lý file cục bộ
    ```
-3. **Thư mục lưu trữ an toàn:** Tạo cấu trúc thư mục lưu trữ cục bộ ngoài web root:
-   - `storage/uploads/documents/` (chứa PDF, DOCX, PPTX)
-   - `storage/uploads/audio/` (chứa file ghi âm câu trả lời)
+3. **Thư mục lưu trữ an toàn & Quản lý vòng đời dữ liệu (Privacy & Storage Lifecycle):**
+   - Cấu trúc thư mục cục bộ ngoài web root: `storage/uploads/documents/`, `storage/uploads/audio/`.
+   - **Privacy-First & Data Minimization:**
+     * File audio ghi âm chỉ lưu tạm thời để phục vụ STT và cho sinh viên nghe lại khi xem báo cáo lần cuối.
+     * Cung cấp cơ chế/API dọn dẹp âm thanh chủ động (`purge_audio`) hoặc tự động dọn sau 24h (`AUDIO_RETENTION_HOURS=24`).
+     * Sau khi bóc tách xong text/chunk và embedding vào DB, file PDF/DOCX gốc có thể tự động xóa trên đĩa (`AUTO_DELETE_RAW_DOCUMENTS_AFTER_INDEXING`) để tiết kiệm dung lượng và bảo mật công trình nghiên cứu.
+     * Thiết kế lớp trừu tượng `StorageProvider` (Interface) để linh hoạt mở rộng (Local, S3/MinIO) mà không sửa logic nghiệp vụ.
 4. **Docker Compose:**
    - `postgres`: Image `pgvector/pgvector:pg16`, cấu hình database `thesisai`.
    - `ollama`: Image `ollama/ollama`, ánh xạ volume để lưu model không bị mất khi restart.
    - `backend` & `frontend` cấu hình Dockerfile tương ứng.
 5. **Cấu hình biến môi trường (`.env.example`):**
-   - Cấu hình cổng kết nối DB, Ollama base URL, thư mục upload, tham số model whisper/ollama.
+   - Cấu hình cổng kết nối DB, Ollama base URL, thư mục upload, tham số model whisper/ollama, thời gian lưu file tạm.
 6. **Healthcheck Endpoints:** `GET /health` kiểm tra kết nối Database, Ollama và kiểm tra dung lượng ổ đĩa.
 
 #### Tiêu chí hoàn thành:
