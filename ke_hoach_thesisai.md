@@ -108,9 +108,9 @@ flowchart TD
 6. **Healthcheck Endpoints:** `GET /health` kiểm tra kết nối Database, Ollama và kiểm tra dung lượng ổ đĩa.
 
 #### Tiêu chí hoàn thành:
-- [ ] Khởi chạy được Postgres (pgvector) và Ollama.
-- [ ] Backend FastAPI kết nối thành công tới Postgres và Ollama.
-- [ ] Frontend kết nối được tới Backend qua API client.
+- [x] Khởi chạy được Postgres (pgvector) và Ollama qua Docker Compose.
+- [x] Backend FastAPI cấu hình đầy đủ kết nối tới Postgres, Ollama và kiểm tra dung lượng ổ đĩa (/api/health).
+- [x] Đồng bộ template biến môi trường (.env.example, .env.local) cho cả Backend và Frontend.
 
 ---
 

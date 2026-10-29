@@ -33,10 +33,11 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/thesisai"
 
-    # Ollama
+    # Ollama & Local AI Models
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     LLM_MODEL: str = "qwen2.5:7b"
     EMBEDDING_MODEL: str = "bge-m3"
+    WHISPER_MODEL: str = "base"
 
     # Storage paths & Data Lifecycle (Privacy-First)
     STORAGE_DIR: str = str(Path(__file__).resolve().parent.parent.parent / "storage")
