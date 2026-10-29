@@ -120,18 +120,21 @@ flowchart TD
 #### Danh sách thực thể dữ liệu (11 bảng cốt lõi):
 1. `users`: id, name, email/username, password_hash, role (`student`, `lecturer`, `admin`), timestamps.
 2. `thesis_projects`: id, student_id, supervisor_id, title, topic, description, status, timestamps.
-3. `documents`: id, project_id, original_filename, mime_type, storage_path, file_size, content_hash, processing_status, error_message, timestamps.
-4. `document_chunks`: id, document_id, project_id, chunk_index, section_title, page_number/slide_number, text, embedding (Vector), timestamps.
+3. `documents`: id, project_id, original_filename, mime_type, storage_path, file_size, content_hash, version (int, quản lý phiên bản tài liệu), is_archived (bool, đánh dấu bản cũ), processing_status, error_message, timestamps.
+4. `document_chunks`: id, document_id, project_id, chunk_index, section_title, page_number/slide_number, text, embedding (Vector), is_active (bool, chỉ tìm kiếm trên chunks của bản tài liệu mới), timestamps.
 5. `project_knowledge_profiles`: id, project_id, version, profile_json, source_document_ids, status, timestamps.
-6. `practice_sessions`: id, project_id, mode (`question_answer`, `full_presentation`), status, knowledge_profile_version, started_at, ended_at.
+6. `practice_sessions`: id, project_id, mode (`question_answer`, `full_presentation`), status, knowledge_profile_version (liên kết phiên bản tri thức cụ thể), started_at, ended_at.
 7. `questions`: id, session_id, order_index, question_text, difficulty, topic_competency, expected_answer_outline, source_chunk_ids, recommended_seconds (mặc định 120s).
-8. `answers`: id, question_id, audio_path, audio_mime_type, duration_seconds, transcript, transcript_segments, processing_status, error_fields, timestamps.
-9. `answer_evaluations`: id, answer_id, content_score, delivery_score, overall_score, criterion_scores_json, feedback_json, evidence_json, model_metadata_json.
+8. `answers`: id, question_id, audio_path (nullable khi đã tiêu hủy), audio_mime_type, duration_seconds, transcript, transcript_segments, processing_status, audio_status (`active`, `purged`, `expired`), audio_purged_at (thời điểm xóa audio vật lý), error_fields, timestamps.
+9. `answer_evaluations`: id, answer_id, content_score, delivery_score, overall_score, criterion_scores_json, feedback_json, evidence_json, model_metadata_json (lưu phiên bản model LLM & rubric để đảm bảo tính giải thích minh bạch).
 10. `presentation_slide_events`: (Dành cho Mode B) id, session_id, slide_index, event_type, elapsed_ms.
 11. `processing_jobs`: id, session_id, answer_id, job_type (`stt`, `evaluation`, `audio_metrics`), status, attempt_count, error_code, timestamps.
 
 #### Công việc cụ thể:
-1. Viết SQLAlchemy Models cho toàn bộ 11 bảng trên.
+1. Viết SQLAlchemy Models cho toàn bộ 11 bảng trên, tích hợp chuẩn hóa trường phiên bản và vòng đời dữ liệu:
+   - **Quản lý phiên bản tài liệu:** Bổ sung `version` và `is_archived` cho `documents`, `is_active` cho `document_chunks` để ngăn chặn triệt để rủi ro dữ liệu RAG lỗi thời (RAG Stale Data).
+   - **Bảo mật & Quyền riêng tư (Privacy-First):** Bổ sung `audio_status` và `audio_purged_at` cho `answers` để quản lý việc tiêu hủy audio vật lý nhưng vẫn bảo lưu trọn vẹn transcript và điểm số.
+   - **Minh bạch & Giải thích kết quả:** Bổ sung `model_metadata_json` cho `answer_evaluations` để lưu vết mô hình AI và rubric chấm điểm.
 2. Kích hoạt extension `vector` trong PostgreSQL.
 3. Thiết lập Alembic và tạo migration đầu tiên.
 4. Đánh chỉ mục (Index) tìm kiếm vector (HNSW/IVFFlat) và khoá ngoại (Foreign Keys).
@@ -139,6 +142,7 @@ flowchart TD
 #### Tiêu chí hoàn thành:
 - [ ] Lệnh `alembic upgrade head` chạy trơn tru, tạo đủ bảng và quan hệ.
 - [ ] Không lưu trực tiếp nhị phân file (audio/tài liệu) trong Postgres, chỉ lưu đường dẫn `storage_path`.
+- [ ] Schema hỗ trợ đầy đủ các trường quản lý vòng đời dữ liệu và phiên bản tri thức.
 
 ---
 
@@ -226,6 +230,8 @@ flowchart TD
 3. **Vector Retriever Scoped:**
    - Truy vấn ngữ nghĩa tương đồng (Cosine similarity).
    - **Bắt buộc:** Luôn filter điều kiện `WHERE project_id = :project_id` (tuyệt đối không để rò rỉ dữ liệu giữa các đồ án khác nhau).
+   - **Chống dữ liệu RAG lỗi thời (RAG Stale Data):** Bổ sung điều kiện `is_active = True`, chỉ truy vấn các chunk thuộc phiên bản tài liệu hiện hành, bỏ qua các bản tài liệu cũ đã được cập nhật/thay thế.
+   - **Tách biệt lưu trữ & Prompt Context:** Lịch sử luyện tập chỉ dùng để tra cứu trên Dashboard; tuyệt đối không nhồi nhét toàn bộ lịch sử vào context window của LLM gây tràn bộ nhớ và loãng thông tin.
 4. **RAG Pipeline Test:** Truy vấn thử nghiệm: đưa câu hỏi kỹ thuật → lấy top 3–5 chunks → ghép ngữ cảnh → LLM sinh câu trả lời có trích dẫn nguồn.
 
 #### Tiêu chí hoàn thành:
@@ -346,12 +352,15 @@ Sinh viên bấm Nộp câu 1
    - Điểm số nội dung + phong thái.
    - Điểm mạnh (Strengths) và Điểm còn thiếu sót (Missing points / Gaps).
    - Gợi ý câu trả lời tốt hơn và trích dẫn trang/slide tài liệu đồ án để sinh viên ôn tập lại.
-3. **Xử lý ngoại lệ công thực:**
+3. **Xử lý ngoại lệ & Bảo mật dữ liệu:**
    - Nếu có câu bị lỗi xử lý STT/LLM, hiển thị trạng thái `partial_failed` (Hoàn tất một phần) và chỉ rõ câu nào gặp lỗi, không được làm tròn hay giấu lỗi.
+   - **Nút hành động bảo mật (Purge Audio):** Sinh viên có thể chủ động bấm *"Tiêu hủy bản ghi âm ngay"* sau khi nghe lại; hệ thống sẽ xóa sạch file `.webm` trên đĩa và cập nhật trạng thái `audio_status='purged'`, chỉ giữ lại transcript và điểm số.
+   - **Biểu đồ tiến bộ (Learning Progress Curve):** Thống kê so sánh điểm số, kỹ năng và mức độ cải thiện qua nhiều phiên luyện tập dựa trên lịch sử transcript/điểm số trong DB (vẫn theo dõi tốt ngay cả khi file audio đã được tiêu hủy).
 
 #### Tiêu chí hoàn thành:
 - [ ] Báo cáo tải đầy đủ thông tin sau khi tất cả các job ngầm hoàn thành.
-- [ ] Trình phát audio phát tốt file âm thanh của từng câu.
+- [ ] Trình phát audio phát tốt file âm thanh của từng câu (khi audio còn lưu trữ).
+- [ ] Tính năng tiêu hủy âm thanh hoạt động an toàn, không làm mất kết quả đánh giá.
 - [ ] Trích dẫn bằng chứng rõ ràng, giúp ích thực tế cho sinh viên.
 
 ---

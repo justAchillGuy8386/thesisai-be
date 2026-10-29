@@ -1,0 +1,48 @@
+﻿version: '3.8'
+
+services:
+  # PostgreSQL Database with pgvector extension
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: thesisai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-thesisai}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - thesisai_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-thesisai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - thesisai-network
+
+  # Ollama Local AI Inference Server
+  ollama:
+    image: ollama/ollama:latest
+    container_name: thesisai-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - thesisai_ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - thesisai-network
+
+volumes:
+  thesisai_postgres_data:
+    name: thesisai_postgres_data
+  thesisai_ollama_models:
+    name: thesisai_ollama_models
+
+networks:
+  thesisai-network:
+    name: thesisai-network
+    driver: bridge
