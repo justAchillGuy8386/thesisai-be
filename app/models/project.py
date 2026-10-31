@@ -1,5 +1,5 @@
 ﻿from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.session import Base
@@ -37,6 +37,21 @@ class ThesisProject(Base):
         "User",
         foreign_keys=[supervisor_id],
         back_populates="supervised_projects",
+    )
+    documents = relationship(
+        "Document",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+    chunks = relationship(
+        "DocumentChunk",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+    knowledge_profiles = relationship(
+        "ProjectKnowledgeProfile",
+        back_populates="project",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
