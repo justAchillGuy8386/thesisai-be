@@ -53,6 +53,11 @@ class ThesisProject(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+    practice_sessions = relationship(
+        "PracticeSession",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<ThesisProject id={self.id} title='{self.title[:30]}' status='{self.status}'>"
