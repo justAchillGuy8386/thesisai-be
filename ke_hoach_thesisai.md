@@ -140,9 +140,10 @@ flowchart TD
 4. Đánh chỉ mục (Index) tìm kiếm vector (HNSW/IVFFlat) và khoá ngoại (Foreign Keys).
 
 #### Tiêu chí hoàn thành:
-- [ ] Lệnh `alembic upgrade head` chạy trơn tru, tạo đủ bảng và quan hệ.
-- [ ] Không lưu trực tiếp nhị phân file (audio/tài liệu) trong Postgres, chỉ lưu đường dẫn `storage_path`.
-- [ ] Schema hỗ trợ đầy đủ các trường quản lý vòng đời dữ liệu và phiên bản tri thức.
+- [x] Lệnh `alembic upgrade head` chạy trơn tru, tạo đủ 11 bảng cốt lõi và các quan hệ Foreign Key CASCADE.
+- [x] Không lưu trực tiếp nhị phân file (audio/tài liệu) trong Postgres, chỉ lưu đường dẫn `storage_path`.
+- [x] Schema hỗ trợ đầy đủ các trường quản lý vòng đời dữ liệu và phiên bản tri thức (`is_active`, `is_archived`, `audio_status`, `audio_purged_at`, `model_metadata_json`).
+- [x] Đã đánh chỉ mục vector HNSW (`ix_document_chunks_embedding_hnsw`) với `vector_cosine_ops` phục vụ RAG siêu tốc.
 
 ---
 
