@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     PORT: int = 8000
     HOST: str = "0.0.0.0"
 
+    # Security & Authentication
+    SECRET_KEY: str = "thesisai-super-secret-key-change-in-production-2026-secure-jwt"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 
