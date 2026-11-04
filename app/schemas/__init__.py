@@ -10,6 +10,10 @@ from app.schemas.project import (
     ProjectResponse,
     LecturerSimpleResponse,
 )
+from app.schemas.document import (
+    DocumentResponse,
+    DocumentListResponse,
+)
 
 __all__ = [
     "UserResponse",
@@ -20,4 +24,6 @@ __all__ = [
     "ProjectUpdateRequest",
     "ProjectResponse",
     "LecturerSimpleResponse",
+    "DocumentResponse",
+    "DocumentListResponse",
 ]
