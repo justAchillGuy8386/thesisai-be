@@ -14,6 +14,7 @@ from app.repositories.chunk_repo import chunk_repo
 from app.storage import storage_provider
 from app.services.document_extractor import document_extractor, ExtractedPage
 from app.services.chunking_service import chunking_service
+from app.services.embedding_service import embedding_service
 
 logger = logging.getLogger(__name__)
 
@@ -288,25 +289,30 @@ class DocumentService:
                 )
                 return 0
 
-            # 3. Persist chunks
+            # 3. Generate Vector Embeddings (1024 dims via bge-m3 / Ollama)
+            chunk_texts = [c.text for c in chunks]
+            embeddings = embedding_service.embed_batch(chunk_texts)
+
+            # 4. Persist chunks with embeddings
             chunk_repo.bulk_create_chunks(
                 db=db,
                 project_id=document.project_id,
                 document_id=document.id,
                 chunks=chunks,
+                embeddings=embeddings,
             )
 
-            # 4. Anti-Stale Guard: deactivate older versions' chunks
+            # 5. Anti-Stale Guard: deactivate older versions' chunks
             chunk_repo.deactivate_older_chunks(
                 db=db,
                 project_id=document.project_id,
                 active_document_id=document.id,
             )
 
-            # 5. Mark as ready
+            # 6. Mark as ready
             document_repo.update_status(db, document, status="ready", error_message=None)
             logger.info(
-                f"Successfully processed document {document.id} ({document.original_filename}): {len(chunks)} chunks created."
+                f"Successfully processed document {document.id} ({document.original_filename}): {len(chunks)} chunks embedded and indexed."
             )
             return len(chunks)
 
