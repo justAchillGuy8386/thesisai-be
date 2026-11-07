@@ -5,6 +5,7 @@ from app.services.chunking_service import ChunkingService, chunking_service, Chu
 from app.services.document_service import DocumentService, document_service
 from app.services.embedding_service import EmbeddingService, embedding_service
 from app.services.rag_retriever import RagRetriever, rag_retriever, RetrievedChunk
+from app.services.knowledge_profile_service import KnowledgeProfileService, knowledge_profile_service
 
 __all__ = [
     "AuthService",
@@ -24,4 +25,6 @@ __all__ = [
     "RagRetriever",
     "rag_retriever",
     "RetrievedChunk",
+    "KnowledgeProfileService",
+    "knowledge_profile_service",
 ]
