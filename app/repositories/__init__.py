@@ -1,6 +1,7 @@
 from app.repositories.user_repo import UserRepository, user_repo
 from app.repositories.project_repo import ProjectRepository, project_repo
 from app.repositories.document_repo import DocumentRepository, document_repo
+from app.repositories.chunk_repo import ChunkRepository, chunk_repo
 
 __all__ = [
     "UserRepository",
@@ -9,4 +10,6 @@ __all__ = [
     "project_repo",
     "DocumentRepository",
     "document_repo",
+    "ChunkRepository",
+    "chunk_repo",
 ]

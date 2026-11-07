@@ -1,4 +1,5 @@
 import hashlib
+import logging
 from pathlib import Path
 from typing import List, Optional
 from fastapi import HTTPException, UploadFile, status
@@ -9,8 +10,12 @@ from app.models.user import User
 from app.schemas.document import DocumentResponse, DocumentListResponse
 from app.repositories.document_repo import document_repo
 from app.repositories.project_repo import project_repo
+from app.repositories.chunk_repo import chunk_repo
 from app.storage import storage_provider
 from app.services.document_extractor import document_extractor, ExtractedPage
+from app.services.chunking_service import chunking_service
+
+logger = logging.getLogger(__name__)
 
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
@@ -221,6 +226,104 @@ class DocumentService:
                 db, document, status="failed", error_message=str(e)
             )
             raise
+
+    def process_document_pipeline(
+        self,
+        document_id: int,
+        db_session: Optional[Session] = None,
+    ) -> int:
+        """
+        Background Pipeline:
+        1. Status -> 'extracting': Extract text page/slide-wise from PDF/DOCX/PPTX.
+        2. Status -> 'indexing': Split text into overlapping semantic chunks with page provenance.
+        3. Save chunks into 'document_chunks' table with is_active = True.
+        4. Deactivate older chunks from previous versions.
+        5. Status -> 'ready'.
+        Returns total chunks created.
+        """
+        from app.db.session import SessionLocal
+
+        close_session = False
+        db = db_session
+        if db is None:
+            db = SessionLocal()
+            close_session = True
+
+        try:
+            document = document_repo.get_by_id(db, document_id)
+            if not document:
+                logger.error(f"Pipeline error: Document ID {document_id} not found.")
+                return 0
+
+            abs_path = storage_provider.get_file_path(document.storage_path)
+            if not abs_path or not abs_path.is_file():
+                document_repo.update_status(
+                    db, document, status="failed", error_message="Tệp tài liệu không tồn tại trên hệ thống lưu trữ."
+                )
+                return 0
+
+            # 1. Extraction phase
+            document_repo.update_status(db, document, status="extracting")
+            pages = document_extractor.extract(abs_path, document.original_filename)
+
+            if not pages:
+                document_repo.update_status(
+                    db,
+                    document,
+                    status="failed",
+                    error_message="Không trích xuất được nội dung văn bản từ tệp (tệp rỗng hoặc PDF dạng ảnh scan).",
+                )
+                return 0
+
+            # 2. Indexing / Chunking phase
+            document_repo.update_status(db, document, status="indexing")
+            chunks = chunking_service.chunk_extracted_pages(pages)
+
+            if not chunks:
+                document_repo.update_status(
+                    db,
+                    document,
+                    status="failed",
+                    error_message="Không thể chia nhỏ đoạn văn bản từ tài liệu.",
+                )
+                return 0
+
+            # 3. Persist chunks
+            chunk_repo.bulk_create_chunks(
+                db=db,
+                project_id=document.project_id,
+                document_id=document.id,
+                chunks=chunks,
+            )
+
+            # 4. Anti-Stale Guard: deactivate older versions' chunks
+            chunk_repo.deactivate_older_chunks(
+                db=db,
+                project_id=document.project_id,
+                active_document_id=document.id,
+            )
+
+            # 5. Mark as ready
+            document_repo.update_status(db, document, status="ready", error_message=None)
+            logger.info(
+                f"Successfully processed document {document.id} ({document.original_filename}): {len(chunks)} chunks created."
+            )
+            return len(chunks)
+
+        except Exception as e:
+            logger.error(f"Error processing document {document_id}: {e}", exc_info=True)
+            try:
+                document = document_repo.get_by_id(db, document_id)
+                if document:
+                    document_repo.update_status(
+                        db, document, status="failed", error_message=f"Lỗi xử lý tài liệu: {str(e)}"
+                    )
+            except Exception:
+                pass
+            return 0
+        finally:
+            if close_session:
+                db.close()
 
 
 document_service = DocumentService()

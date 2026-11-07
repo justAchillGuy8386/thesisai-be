@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, status
+from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -18,20 +18,27 @@ router = APIRouter(prefix="/projects/{project_id}/documents", tags=["documents"]
 )
 def upload_document(
     project_id: int,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="Tệp tài liệu đồ án (tối đa 50MB, định dạng PDF, DOCX, PPTX)"),
     db: Session = Depends(get_db),
     current_student: User = Depends(require_student),
 ) -> DocumentResponse:
     """
     Sinh viên tải lên tài liệu đề cương hoặc toàn văn luận văn tốt nghiệp.
-    Hệ thống kiểm tra bảo mật, định dạng, sinh mã băm SHA-256 và tự động cập nhật số phiên bản (versioning).
+    Hệ thống kiểm tra bảo mật, định dạng, sinh mã băm SHA-256, tự động cập nhật số phiên bản (versioning),
+    và tự động kích hoạt background task để bóc tách cấu trúc và lưu chunks.
     """
-    return document_service.upload_document(
+    document = document_service.upload_document(
         db=db,
         project_id=project_id,
         current_user=current_student,
         file=file,
     )
+
+    # Queue background task for extraction and chunking
+    background_tasks.add_task(document_service.process_document_pipeline, document.id)
+
+    return document
 
 
 @router.get(

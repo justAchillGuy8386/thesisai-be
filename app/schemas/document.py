@@ -1,9 +1,19 @@
 from datetime import datetime
+from dataclasses import dataclass
 from typing import Optional, List, Literal
 from pydantic import BaseModel, Field, ConfigDict, computed_field
 
 
 DocumentStatusType = Literal["uploaded", "extracting", "indexing", "ready", "failed"]
+
+
+@dataclass
+class ChunkItem:
+    """Represents a coherent text chunk with full provenance metadata."""
+    chunk_index: int
+    section_title: Optional[str]
+    page_number: Optional[int]
+    text: str
 
 
 class DocumentResponse(BaseModel):
