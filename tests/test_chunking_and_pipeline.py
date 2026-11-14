@@ -21,6 +21,7 @@ from app.models.user import User
 from app.models.project import ThesisProject
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
+from app.models.knowledge_profile import ProjectKnowledgeProfile
 from app.core.security import hash_password, create_access_token
 from app.services.chunking_service import chunking_service, ChunkItem
 from app.services.document_extractor import ExtractedPage
@@ -42,6 +43,7 @@ User.__table__.create(bind=test_engine)
 ThesisProject.__table__.create(bind=test_engine)
 Document.__table__.create(bind=test_engine)
 DocumentChunk.__table__.create(bind=test_engine)
+ProjectKnowledgeProfile.__table__.create(bind=test_engine)
 
 
 def override_get_db():
@@ -57,6 +59,10 @@ app.dependency_overrides[get_db] = override_get_db
 # Override SessionLocal so background tasks also use the test SQLite DB
 from app.db import session as db_session_module
 db_session_module.SessionLocal = TestingSessionLocal
+
+# Fast mock for LLM call during pipeline tests
+from app.services.knowledge_profile_service import knowledge_profile_service
+knowledge_profile_service._call_ollama_llm = lambda *args, **kwargs: None
 
 client = TestClient(app)
 

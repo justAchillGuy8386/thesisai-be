@@ -1,4 +1,4 @@
-﻿
+
 services:
   # PostgreSQL Database with pgvector extension
   db:
@@ -31,7 +31,8 @@ services:
     volumes:
       - thesisai_ollama_models:/root/.ollama
     environment:
-      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_MAX_LOADED_MODELS=1
     networks:
       - thesisai-network
 

@@ -160,8 +160,8 @@ flowchart TD
 4. Giao diện Login / Register đẹp mắt, dễ sử dụng.
 
 #### Tiêu chí hoàn thành:
-- [ ] Đăng ký/đăng nhập sinh viên và giảng viên thành công.
-- [ ] API chặn truy cập chéo dữ liệu giữa các sinh viên (HTTP 403/404).
+- [x] Đăng ký/đăng nhập sinh viên và giảng viên thành công.
+- [x] API chặn truy cập chéo dữ liệu giữa các sinh viên (HTTP 403/404).
 
 ---
 
@@ -177,8 +177,8 @@ flowchart TD
    - Nút hành động nhanh: **"Bắt đầu Luyện tập Bảo vệ" (Start Practice)**.
 
 #### Tiêu chí hoàn thành:
-- [ ] Sinh viên tạo được đề tài đồ án.
-- [ ] Dashboard hiển thị trực quan thông tin đồ án và tài liệu.
+- [x] Sinh viên tạo được đề tài đồ án.
+- [x] Dashboard hiển thị trực quan thông tin đồ án và tài liệu.
 
 ---
 
@@ -208,9 +208,9 @@ flowchart TD
 4. **Xử lý ngầm (Background Task):** Upload trả về HTTP 200 ngay, tác vụ trích xuất chạy ngầm cập nhật trạng thái `processing_status`.
 
 #### Tiêu chí hoàn thành:
-- [ ] Tải lên và trích xuất thành công cả file PDF, Word và PowerPoint.
-- [ ] Chunks được lưu vào DB kèm chính xác số trang/slide xuất xứ.
-- [ ] Bắt các lỗi file mã hóa, file rỗng và hiển thị thông báo an toàn.
+- [x] Tải lên và trích xuất thành công cả file PDF, Word và PowerPoint.
+- [x] Chunks được lưu vào DB kèm chính xác số trang/slide xuất xứ.
+- [x] Bắt các lỗi file mã hóa, file rỗng và hiển thị thông báo an toàn.
 
 ---
 
@@ -236,9 +236,9 @@ flowchart TD
 4. **RAG Pipeline Test:** Truy vấn thử nghiệm: đưa câu hỏi kỹ thuật → lấy top 3–5 chunks → ghép ngữ cảnh → LLM sinh câu trả lời có trích dẫn nguồn.
 
 #### Tiêu chí hoàn thành:
-- [ ] Knowledge Profile được tạo tự động sau khi tài liệu xử lý xong.
-- [ ] Tìm kiếm vector hoạt động nhanh chóng, chính xác trên pgvector.
-- [ ] LLM trả lời bám sát bằng chứng đồ án, nêu rõ số trang/slide trích dẫn.
+- [x] Knowledge Profile được tạo tự động sau khi tài liệu xử lý xong.
+- [x] Tìm kiếm vector hoạt động nhanh chóng, chính xác trên pgvector.
+- [x] LLM trả lời bám sát bằng chứng đồ án, nêu rõ số trang/slide trích dẫn.
 
 ---
 

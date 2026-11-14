@@ -314,6 +314,19 @@ class DocumentService:
             logger.info(
                 f"Successfully processed document {document.id} ({document.original_filename}): {len(chunks)} chunks embedded and indexed."
             )
+
+            # 7. Auto-trigger Knowledge Profile synthesis (Phase 6, Step 6.3)
+            try:
+                from app.services.knowledge_profile_service import knowledge_profile_service
+                knowledge_profile_service.generate_profile(db=db, project_id=document.project_id)
+                logger.info(
+                    f"Auto-generated knowledge profile for project {document.project_id} after document {document.id} upload."
+                )
+            except Exception as kp_err:
+                logger.warning(
+                    f"Auto knowledge profile generation non-fatal warning for project {document.project_id}: {kp_err}"
+                )
+
             return len(chunks)
 
         except Exception as e:
