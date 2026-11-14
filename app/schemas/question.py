@@ -42,6 +42,7 @@ class QuestionResponse(BaseModel):
     expected_answer_outline: str
     source_chunk_ids: List[int] = Field(default_factory=list)
     recommended_seconds: int
+    is_answered: bool = False
     created_at: datetime
 
     class Config:
