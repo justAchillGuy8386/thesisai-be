@@ -14,6 +14,12 @@ from app.schemas.document import (
     DocumentResponse,
     DocumentListResponse,
 )
+from app.schemas.question import (
+    QuestionDifficulty,
+    GeneratedQuestionItem,
+    GeneratedQuestionSet,
+    QuestionResponse,
+)
 
 __all__ = [
     "UserResponse",
@@ -26,4 +32,8 @@ __all__ = [
     "LecturerSimpleResponse",
     "DocumentResponse",
     "DocumentListResponse",
+    "QuestionDifficulty",
+    "GeneratedQuestionItem",
+    "GeneratedQuestionSet",
+    "QuestionResponse",
 ]
