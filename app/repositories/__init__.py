@@ -5,6 +5,7 @@ from app.repositories.chunk_repo import ChunkRepository, chunk_repo
 from app.repositories.knowledge_profile_repo import KnowledgeProfileRepository, knowledge_profile_repo
 from app.repositories.session_repo import SessionRepository, session_repo
 from app.repositories.question_repo import QuestionRepository, question_repo
+from app.repositories.answer_repo import AnswerRepository, answer_repo
 
 __all__ = [
     "UserRepository",
@@ -21,4 +22,6 @@ __all__ = [
     "session_repo",
     "QuestionRepository",
     "question_repo",
+    "AnswerRepository",
+    "answer_repo",
 ]

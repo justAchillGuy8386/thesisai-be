@@ -265,8 +265,8 @@ flowchart TD
 4. API khởi tạo phiên luyện tập: `POST /api/projects/{id}/practice/sessions`.
 
 #### Tiêu chí hoàn thành:
-- [ ] Sinh được bộ câu hỏi chất lượng cao, phản ánh đúng đồ án của sinh viên.
-- [ ] Có kèm dàn ý kỳ vọng để làm thước đo chấm điểm.
+- [x] Sinh được bộ câu hỏi chất lượng cao, phản ánh đúng đồ án của sinh viên.
+- [x] Có kèm dàn ý kỳ vọng để làm thước đo chấm điểm.
 
 ---
 

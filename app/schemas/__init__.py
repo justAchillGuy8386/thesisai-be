@@ -20,6 +20,10 @@ from app.schemas.question import (
     GeneratedQuestionSet,
     QuestionResponse,
 )
+from app.schemas.answer import (
+    AnswerSubmitResponse,
+    AnswerDetailResponse,
+)
 
 __all__ = [
     "UserResponse",
@@ -36,4 +40,6 @@ __all__ = [
     "GeneratedQuestionItem",
     "GeneratedQuestionSet",
     "QuestionResponse",
+    "AnswerSubmitResponse",
+    "AnswerDetailResponse",
 ]
