@@ -6,6 +6,7 @@ from app.repositories.knowledge_profile_repo import KnowledgeProfileRepository, 
 from app.repositories.session_repo import SessionRepository, session_repo
 from app.repositories.question_repo import QuestionRepository, question_repo
 from app.repositories.answer_repo import AnswerRepository, answer_repo
+from app.repositories.evaluation_repo import EvaluationRepository, evaluation_repo
 
 __all__ = [
     "UserRepository",
@@ -24,4 +25,6 @@ __all__ = [
     "question_repo",
     "AnswerRepository",
     "answer_repo",
+    "EvaluationRepository",
+    "evaluation_repo",
 ]

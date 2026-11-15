@@ -24,6 +24,13 @@ from app.schemas.answer import (
     AnswerSubmitResponse,
     AnswerDetailResponse,
 )
+from app.schemas.evaluation import (
+    CriterionScoresDetail,
+    FeedbackDetail,
+    EvidenceDetail,
+    ModelMetadataDetail,
+    AnswerEvaluationResponse,
+)
 
 __all__ = [
     "UserResponse",
@@ -42,4 +49,9 @@ __all__ = [
     "QuestionResponse",
     "AnswerSubmitResponse",
     "AnswerDetailResponse",
+    "CriterionScoresDetail",
+    "FeedbackDetail",
+    "EvidenceDetail",
+    "ModelMetadataDetail",
+    "AnswerEvaluationResponse",
 ]

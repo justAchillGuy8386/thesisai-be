@@ -7,6 +7,7 @@ from app.models.answer import Answer
 from app.repositories.answer_repo import answer_repo
 from app.services.stt_service import stt_service
 from app.services.audio_analysis_service import audio_analysis_service
+from app.services.evaluation_service import evaluation_service
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +75,19 @@ class AnswerProcessingPipeline:
             existing_fields["speech_metrics"] = speech_metrics
             answer.error_fields = existing_fields
 
-            # Step 4: Advance status to 'evaluating' (ready for Step 8.3 LLM Grading)
+            # Step 4: Advance status to 'evaluating'
             answer_repo.update_processing_status(db, answer, status="evaluating", error_fields=existing_fields)
-            logger.info(f"Answer #{answer_id} pipeline complete. Status transitioned to 'evaluating' (WPM: {speech_metrics.get('speaking_rate_wpm')}).")
+            logger.info(f"Answer #{answer_id} status updated to 'evaluating' (WPM: {speech_metrics.get('speaking_rate_wpm')}). Executing LLM Rubric Evaluation...")
+
+            # Step 5: Execute LLM Rubric Evaluation Engine
+            eval_record = evaluation_service.evaluate_answer(db=db, answer_id=answer.id)
+
+            # Step 6: Mark answer processing status as 'completed'
+            answer_repo.update_processing_status(db, answer, status="completed", error_fields=existing_fields)
+            logger.info(
+                f"Answer #{answer_id} processing pipeline completed successfully! "
+                f"Score: {eval_record.overall_score}/10 (Content: {eval_record.content_score}, Delivery: {eval_record.delivery_score})."
+            )
 
         except Exception as e:
             logger.error(f"Error in processing pipeline for Answer #{answer_id}: {e}", exc_info=True)

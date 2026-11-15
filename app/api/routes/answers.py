@@ -12,11 +12,15 @@ from app.db.session import get_db
 from app.models.user import User
 from app.api.deps import get_current_user
 from app.schemas.answer import AnswerSubmitResponse, AnswerDetailResponse
+from app.schemas.evaluation import AnswerEvaluationResponse
 from app.repositories.session_repo import session_repo
 from app.repositories.question_repo import question_repo
 from app.repositories.project_repo import project_repo
 from app.repositories.answer_repo import answer_repo
+from app.repositories.evaluation_repo import evaluation_repo
 from app.services.answer_processing_pipeline import answer_processing_pipeline
+from app.services.evaluation_service import evaluation_service
+from app.services.audio_privacy_service import audio_privacy_service
 
 router = APIRouter(tags=["answers"])
 
@@ -269,4 +273,193 @@ def stream_answer_audio(
         media_type=answer.audio_mime_type,
         filename=Path(answer.audio_path).name,
     )
+
+
+@router.get(
+    "/sessions/{session_id}/questions/{question_id}/evaluation",
+    response_model=AnswerEvaluationResponse,
+    summary="Lấy kết quả đánh giá LLM Rubric và nhận xét cho câu trả lời của một câu hỏi",
+)
+def get_question_answer_evaluation(
+    session_id: int,
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AnswerEvaluationResponse:
+    """
+    Truy vấn điểm số đa chiều (Content 80% + Delivery 20%),
+    các tiêu chí rubric thành phần, điểm mạnh, điểm yếu, và câu trả lời mẫu.
+    """
+    session_obj = session_repo.get_by_id(db, session_id)
+    if not session_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Phiên luyện tập #{session_id} không tồn tại.",
+        )
+
+    project = project_repo.get_by_id(db, session_obj.project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Đề tài không tồn tại.",
+        )
+
+    is_owner = project.student_id == current_user.id
+    is_supervisor = project.supervisor_id == current_user.id
+    is_admin = current_user.role == "admin"
+    if not (is_owner or is_supervisor or is_admin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền xem kết quả đánh giá của câu trả lời này.",
+        )
+
+    answer = answer_repo.get_by_question_id(db, question_id)
+    if not answer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Câu hỏi #{question_id} chưa có câu trả lời nào được nộp.",
+        )
+
+    evaluation = evaluation_repo.get_by_answer_id(db, answer.id)
+    if not evaluation:
+        # Check processing status
+        if answer.processing_status in ("queued", "transcribing", "evaluating"):
+            raise HTTPException(
+                status_code=status.HTTP_202_ACCEPTED,
+                detail=f"Câu trả lời đang trong tiến trình xử lý (trạng thái: {answer.processing_status}). Vui lòng thử lại sau giây lát.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chưa có kết quả đánh giá cho câu trả lời này.",
+        )
+
+    return AnswerEvaluationResponse.model_validate(evaluation)
+
+
+@router.post(
+    "/sessions/{session_id}/questions/{question_id}/evaluation/reevaluate",
+    response_model=AnswerEvaluationResponse,
+    summary="Kích hoạt chấm điểm lại câu trả lời (Re-evaluate)",
+)
+def reevaluate_question_answer(
+    session_id: int,
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AnswerEvaluationResponse:
+    """
+    Cho phép sinh viên hoặc giảng viên yêu cầu chấm điểm lại dựa trên transcript đã có.
+    """
+    session_obj = session_repo.get_by_id(db, session_id)
+    if not session_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Phiên luyện tập #{session_id} không tồn tại.",
+        )
+
+    project = project_repo.get_by_id(db, session_obj.project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Đề tài không tồn tại.",
+        )
+
+    is_owner = project.student_id == current_user.id
+    is_supervisor = project.supervisor_id == current_user.id
+    is_admin = current_user.role == "admin"
+    if not (is_owner or is_supervisor or is_admin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền thực hiện thao tác này.",
+        )
+
+    answer = answer_repo.get_by_question_id(db, question_id)
+    if not answer or not answer.transcript:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Câu trả lời chưa có transcript để thực hiện chấm điểm lại.",
+        )
+
+    evaluation = evaluation_service.evaluate_answer(db=db, answer_id=answer.id)
+    return AnswerEvaluationResponse.model_validate(evaluation)
+
+
+@router.post(
+    "/sessions/{session_id}/questions/{question_id}/purge-audio",
+    summary="Chủ động tiêu hủy file âm thanh ghi âm vì lý do riêng tư (Privacy-by-Design)",
+)
+def purge_question_audio(
+    session_id: int,
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Xóa vĩnh viễn tệp âm thanh giọng nói trên máy chủ ngay lập tức,
+    nhưng giữ nguyên văn bản transcript và kết quả đánh giá để sinh viên ôn luyện.
+    """
+    session_obj = session_repo.get_by_id(db, session_id)
+    if not session_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Phiên luyện tập #{session_id} không tồn tại.",
+        )
+
+    project = project_repo.get_by_id(db, session_obj.project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Đề tài không tồn tại.",
+        )
+
+    is_owner = project.student_id == current_user.id
+    is_admin = current_user.role == "admin"
+    if not (is_owner or is_admin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Chỉ chủ sở hữu câu trả lời mới có quyền yêu cầu tiêu hủy tệp âm thanh.",
+        )
+
+    answer = answer_repo.get_by_question_id(db, question_id)
+    if not answer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Câu hỏi #{question_id} chưa có câu trả lời nào.",
+        )
+
+    success = audio_privacy_service.purge_single_answer_audio(db, answer)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Không thể tiêu hủy tệp âm thanh trên máy chủ.",
+        )
+
+    return {
+        "status": "success",
+        "message": "Đã tiêu hủy tệp âm thanh thành công theo chính sách bảo mật dữ liệu riêng tư.",
+        "answer_id": answer.id,
+        "audio_status": answer.audio_status,
+        "purged_at": answer.audio_purged_at,
+    }
+
+
+@router.post(
+    "/privacy/purge-expired-audios",
+    summary="Tiêu hủy hàng loạt các tệp ghi âm giọng nói đã hết hạn (> 24 giờ)",
+)
+def purge_expired_audio_recordings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Tiến trình bảo trì định kỳ quét và xóa các tệp âm thanh đã vượt quá thời hạn lưu giữ.
+    """
+    purged_count = audio_privacy_service.purge_expired_audio_recordings(db)
+    return {
+        "status": "success",
+        "purged_count": purged_count,
+        "retention_hours": settings.AUDIO_RETENTION_HOURS,
+        "message": f"Đã quét và tiêu hủy {purged_count} tệp ghi âm hết hạn lưu giữ.",
+    }
+
 
