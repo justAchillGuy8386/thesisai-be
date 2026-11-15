@@ -3,7 +3,7 @@ import shutil
 import uuid
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -16,6 +16,7 @@ from app.repositories.session_repo import session_repo
 from app.repositories.question_repo import question_repo
 from app.repositories.project_repo import project_repo
 from app.repositories.answer_repo import answer_repo
+from app.services.answer_processing_pipeline import answer_processing_pipeline
 
 router = APIRouter(tags=["answers"])
 
@@ -40,6 +41,7 @@ ALLOWED_AUDIO_MIMES = {
 def submit_question_audio_answer(
     session_id: int,
     question_id: int,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="File audio ghi âm (WebM/WAV)"),
     duration_seconds: Optional[float] = Form(None, description="Thời lượng ghi âm thực tế (giây)"),
     db: Session = Depends(get_db),
@@ -133,6 +135,9 @@ def submit_question_audio_answer(
         audio_mime_type=raw_mime,
         duration_seconds=duration_seconds,
     )
+
+    # 7. Enqueue asynchronous STT & speech analytics pipeline
+    background_tasks.add_task(answer_processing_pipeline.process_answer, answer.id)
 
     return AnswerSubmitResponse(
         id=answer.id,
