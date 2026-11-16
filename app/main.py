@@ -21,7 +21,7 @@ if settings.CORS_ORIGINS:
     )
 
 # Include API Router
-# Reload trigger
+# Reload trigger: 2026-11-15 Step 8.4 av compatibility fix
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 

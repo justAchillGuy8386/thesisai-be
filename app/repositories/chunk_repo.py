@@ -128,6 +128,11 @@ class ChunkRepository:
             scored.sort(key=lambda x: x[1], reverse=True)
             return scored[:top_k]
 
+    def get_by_id(self, db: Session, chunk_id: int) -> Optional[DocumentChunk]:
+        """Fetch a single chunk by its primary key ID."""
+        stmt = select(DocumentChunk).where(DocumentChunk.id == chunk_id)
+        return db.scalar(stmt)
+
     def delete_chunks_by_document(
         self,
         db: Session,

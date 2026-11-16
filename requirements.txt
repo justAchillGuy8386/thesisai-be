@@ -17,5 +17,6 @@ pypdf>=5.0.0
 python-docx>=1.1.0
 python-pptx>=1.0.0
 faster-whisper>=1.0.0
+av<18
 librosa>=0.10.0
 soundfile>=0.12.0

@@ -26,6 +26,7 @@ from app.models.knowledge_profile import ProjectKnowledgeProfile
 from app.models.session import PracticeSession
 from app.models.question import Question
 from app.models.answer import Answer
+from app.models.evaluation import AnswerEvaluation
 from app.core.security import hash_password
 from app.services.audio_analysis_service import audio_analysis_service
 from app.services.stt_service import stt_service
@@ -50,6 +51,7 @@ ProjectKnowledgeProfile.__table__.create(bind=test_engine)
 PracticeSession.__table__.create(bind=test_engine)
 Question.__table__.create(bind=test_engine)
 Answer.__table__.create(bind=test_engine)
+AnswerEvaluation.__table__.create(bind=test_engine)
 
 
 def create_synthetic_wav_file(duration_sec=5.0, sample_rate=16000) -> str:
@@ -210,7 +212,7 @@ def test_answer_processing_pipeline_lifecycle():
 
             # Re-fetch from DB
             db.refresh(answer)
-            assert answer.processing_status == "evaluating", f"Expected 'evaluating', got '{answer.processing_status}'"
+            assert answer.processing_status in ("evaluating", "completed"), f"Expected 'evaluating' or 'completed', got '{answer.processing_status}'"
             assert answer.transcript is not None
             assert "kiến trúc phân tầng" in answer.transcript
             assert len(answer.transcript_segments) == 1

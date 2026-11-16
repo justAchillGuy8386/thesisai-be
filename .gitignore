@@ -39,6 +39,7 @@ env/
 # Storage uploads (files and audio stored locally outside web root)
 storage/uploads/
 storage/temp/
+storage/audio_recordings/
 
 # Testing & logs
 .coverage
