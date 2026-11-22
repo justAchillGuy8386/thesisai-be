@@ -20,6 +20,7 @@ class PracticeSessionCreateRequest(BaseModel):
 
 class PracticeSessionListItemResponse(BaseModel):
     id: int
+    session_number: int = 1
     project_id: int
     mode: str
     status: str
@@ -35,6 +36,7 @@ class PracticeSessionListItemResponse(BaseModel):
 
 class PracticeSessionDetailResponse(BaseModel):
     id: int
+    session_number: int = 1
     project_id: int
     mode: str
     status: str

@@ -21,7 +21,7 @@ if settings.CORS_ORIGINS:
     )
 
 # Include API Router
-# Reload trigger: 2026-11-15 Step 8.4 av compatibility fix
+# Reload trigger: 2026-11-23 qwen2.5:3b & whisper-small upgrade
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 

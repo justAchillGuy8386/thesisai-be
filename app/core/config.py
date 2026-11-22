@@ -1,4 +1,4 @@
-﻿from typing import List, Union
+from typing import List, Union
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
@@ -17,6 +17,15 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     PORT: int = 8000
     HOST: str = "0.0.0.0"
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def assemble_debug(cls, v: Union[str, bool]) -> bool:
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "yes", "on", "t", "debug", "development")
+        return False
 
     # Security & Authentication
     SECRET_KEY: str = "thesisai-super-secret-key-change-in-production-2026-secure-jwt"
@@ -40,9 +49,9 @@ class Settings(BaseSettings):
 
     # Ollama & Local AI Models
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    LLM_MODEL: str = "qwen2.5:7b"
+    LLM_MODEL: str = "qwen2.5:3b"
     EMBEDDING_MODEL: str = "bge-m3"
-    WHISPER_MODEL: str = "base"
+    WHISPER_MODEL: str = "small"
 
     # Storage paths & Data Lifecycle (Privacy-First)
     STORAGE_DIR: str = str(Path(__file__).resolve().parent.parent.parent / "storage")

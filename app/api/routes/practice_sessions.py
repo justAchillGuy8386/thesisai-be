@@ -106,8 +106,11 @@ def create_practice_session(
         for q in db_questions
     ]
 
+    session_num = session_repo.get_session_number(db, session_obj.project_id, session_obj.id)
+
     return PracticeSessionDetailResponse(
         id=session_obj.id,
+        session_number=session_num,
         project_id=session_obj.project_id,
         mode=session_obj.mode,
         status=session_obj.status,
@@ -150,11 +153,13 @@ def list_project_practice_sessions(
     sessions = session_repo.list_by_project_id(db, project_id)
     results = []
     for s in sessions:
+        s_num = session_repo.get_session_number(db, project_id, s.id)
         total_q = len(s.questions)
         ans_q = sum(1 for q in s.questions if q.answer is not None)
         results.append(
             PracticeSessionListItemResponse(
                 id=s.id,
+                session_number=s_num,
                 project_id=s.project_id,
                 mode=s.mode,
                 status=s.status,
@@ -222,8 +227,11 @@ def get_practice_session_detail(
         for q in sorted_questions
     ]
 
+    session_num = session_repo.get_session_number(db, session_obj.project_id, session_obj.id)
+
     return PracticeSessionDetailResponse(
         id=session_obj.id,
+        session_number=session_num,
         project_id=session_obj.project_id,
         mode=session_obj.mode,
         status=session_obj.status,
@@ -297,8 +305,11 @@ def update_practice_session_status(
         for q in sorted_questions
     ]
 
+    session_num = session_repo.get_session_number(db, updated_session.project_id, updated_session.id)
+
     return PracticeSessionDetailResponse(
         id=updated_session.id,
+        session_number=session_num,
         project_id=updated_session.project_id,
         mode=updated_session.mode,
         status=updated_session.status,

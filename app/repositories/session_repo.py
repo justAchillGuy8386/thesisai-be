@@ -67,6 +67,22 @@ class SessionRepository:
             .all()
         )
 
+    def count_by_project_id(self, db: Session, project_id: int) -> int:
+        return db.query(PracticeSession).filter(PracticeSession.project_id == project_id).count()
+
+    def get_session_number(
+        self, db: Session, project_id: int, session_id: int
+    ) -> int:
+        """Calculate 1-based chronological index of the session for a project."""
+        return (
+            db.query(PracticeSession)
+            .filter(
+                PracticeSession.project_id == project_id,
+                PracticeSession.id <= session_id,
+            )
+            .count()
+        )
+
     def update_status(
         self, db: Session, session: PracticeSession, status: str
     ) -> PracticeSession:

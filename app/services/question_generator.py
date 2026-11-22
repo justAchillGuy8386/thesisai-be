@@ -34,7 +34,7 @@ class QuestionGeneratorService:
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout_seconds: float = 75.0,
+        timeout_seconds: float = 90.0,
     ):
         self.base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self.model = model or settings.LLM_MODEL
