@@ -8,6 +8,9 @@ from app.models.answer import Answer
 from app.models.job import ProcessingJob
 from app.repositories.answer_repo import answer_repo
 from app.repositories.question_repo import question_repo
+from app.repositories.session_repo import session_repo
+from app.repositories.project_repo import project_repo
+from app.repositories.knowledge_profile_repo import knowledge_profile_repo
 from app.services.stt_service import stt_service
 from app.services.audio_analysis_service import audio_analysis_service
 from app.services.evaluation_service import evaluation_service
@@ -73,6 +76,50 @@ class AnswerProcessingPipeline:
             logger.warning(f"Could not update ProcessingJob #{job.id}: {e}")
             db.rollback()
 
+    def _build_dynamic_stt_prompt(self, db: Session, question) -> Optional[str]:
+        """
+        Build a concise, domain-agnostic Whisper initial_prompt grounded in the
+        student's specific thesis title, major, Knowledge Profile methods/tools,
+        and current question (kept under ~500 chars to fit Whisper's 224-token window).
+        """
+        if not question:
+            return None
+        try:
+            session_obj = session_repo.get_by_id(db, question.session_id)
+            project = (
+                project_repo.get_by_id(db, session_obj.project_id)
+                if session_obj
+                else None
+            )
+
+            parts = []
+            if project:
+                title = (project.title or "").strip()
+                major = (project.topic or "").strip()
+                if title and major:
+                    parts.append(f"Bảo vệ đồ án '{title}' (chuyên ngành {major}).")
+                elif title:
+                    parts.append(f"Bảo vệ đồ án '{title}'.")
+
+                profile = knowledge_profile_repo.get_by_project_id(db, project.id)
+                if profile and isinstance(profile.profile_json, dict):
+                    methods = profile.profile_json.get("methodology_and_tech") or []
+                    if methods:
+                        methods_snippet = "; ".join(str(m).strip() for m in methods[:3])[:180]
+                        parts.append(f"Thuật ngữ & phương pháp: {methods_snippet}.")
+
+            q_topic = (question.topic_competency or "").strip()
+            q_text = (question.question_text or "").strip()[:140]
+            if q_text:
+                prefix = f"Chủ đề {q_topic} — " if q_topic else ""
+                parts.append(f"Câu hỏi: {prefix}{q_text}")
+
+            prompt = " ".join(parts).strip()
+            return prompt[:500] if prompt else None
+        except Exception as e:
+            logger.warning(f"Failed to build dynamic STT prompt: {e}")
+            return None
+
     def process_answer(self, answer_id: int, db_session: Optional[Session] = None):
         """
         Background task worker executing STT, acoustic metrics, and LLM Rubric evaluation.
@@ -113,10 +160,12 @@ class AnswerProcessingPipeline:
             logger.info(f"Answer #{answer_id} status updated to 'transcribing'.")
             active_job = self._start_job(db, session_id, answer.id, "stt")
 
-            # Step 2: Speech-to-Text (STT)
+            # Step 2: Speech-to-Text (STT) with dynamic thesis-grounded prompt
+            dynamic_prompt = self._build_dynamic_stt_prompt(db, question)
             stt_result = stt_service.transcribe_audio(
                 audio_path=answer.audio_path,
                 language="vi",
+                initial_prompt=dynamic_prompt,
             )
             full_transcript = stt_result.get("full_text", "").strip()
             segments = stt_result.get("segments", [])
