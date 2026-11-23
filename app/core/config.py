@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     LLM_MODEL: str = "qwen2.5:3b"
     EMBEDDING_MODEL: str = "bge-m3"
-    WHISPER_MODEL: str = "small"
+    WHISPER_MODEL: str = "large-v3-turbo"
 
     # Storage paths & Data Lifecycle (Privacy-First)
     STORAGE_DIR: str = str(Path(__file__).resolve().parent.parent.parent / "storage")
