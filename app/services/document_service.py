@@ -19,7 +19,7 @@ from app.services.embedding_service import embedding_service
 logger = logging.getLogger(__name__)
 
 
-MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
+MAX_FILE_SIZE_BYTES = 60 * 1024 * 1024  # 50 MB limit
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".pptx"}
 
 

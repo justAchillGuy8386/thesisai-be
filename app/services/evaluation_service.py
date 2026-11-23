@@ -33,7 +33,7 @@ class EvaluationService:
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout_seconds: float = 90.0,
+        timeout_seconds: float = 180.0,
     ):
         self.base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self.model = model or settings.LLM_MODEL
@@ -345,23 +345,30 @@ class EvaluationService:
         if not text:
             return None
 
-        # 1. Tìm khối ```json ... ```
-        match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+        cleaned = text.strip()
+        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned, re.IGNORECASE)
         if match:
-            try:
-                return json.loads(match.group(1))
-            except json.JSONDecodeError:
-                pass
+            candidate = match.group(1).strip()
+        else:
+            first_brace = cleaned.find("{")
+            last_brace = cleaned.rfind("}")
+            if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+                candidate = cleaned[first_brace : last_brace + 1]
+            else:
+                candidate = cleaned
 
-        # 2. Tìm khối {...} lớn nhất
-        first_brace = text.find("{")
-        last_brace = text.rfind("}")
-        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-            candidate = text[first_brace : last_brace + 1]
-            try:
-                return json.loads(candidate)
-            except json.JSONDecodeError:
-                pass
+        # 1. Thử parse trực tiếp
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+        # 2. Xóa trailing comma trước ngoặc đóng
+        try:
+            sanitized = re.sub(r",\s*([\]}])", r"\1", candidate)
+            return json.loads(sanitized)
+        except json.JSONDecodeError:
+            pass
 
         return None
 

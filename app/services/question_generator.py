@@ -34,7 +34,7 @@ class QuestionGeneratorService:
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout_seconds: float = 90.0,
+        timeout_seconds: float = 300.0,
     ):
         self.base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self.model = model or settings.LLM_MODEL
@@ -173,10 +173,10 @@ class QuestionGeneratorService:
             "   - 'hard': Khả năng chịu tải và scale, xử lý đồng thời (concurrency/race conditions), bảo mật & xác thực, ngoại lệ & rollback, hạn chế lớn nhất và hướng phát triển.\n"
             "2. Mỗi câu hỏi PHẢI CÓ:\n"
             "   - 'order_index': Thứ tự từ 1 đến N\n"
-            "   - 'question_text': Câu hỏi ngắn gọn, sắc bén, mang phong thái hội đồng phản biện học thuật\n"
+            "   - 'question_text': Câu hỏi ngắn gọn, sâu sắc, mang phong thái hội đồng phản biện học thuật\n"
             "   - 'difficulty': 'easy' | 'medium' | 'hard'\n"
-            "   - 'topic_competency': Tên lĩnh vực (Ví dụ: 'Tổng quan đề tài', 'Kiến trúc hệ thống', 'Cơ sở dữ liệu', 'Bảo mật', 'Xử lý tải & Tối ưu')\n"
-            "   - 'expected_answer_outline': Dàn ý 3-4 gạch đầu dòng rõ ràng, chỉ rõ những ý sinh viên bắt buộc phải trả lời để đạt điểm tối đa\n"
+            "   - 'topic_competency': Tên lĩnh vực chuyên môn (VD: 'Kiến trúc hệ thống', 'Cơ sở dữ liệu', 'Bảo mật', 'Quy trình nghiệp vụ')\n"
+            "   - 'expected_answer_outline': Dàn ý gợi ý 2-3 gạch đầu dòng rõ ràng (- Ý 1...\\n- Ý 2...\\n- Ý 3...), chỉ rõ các luận điểm kỹ thuật then chốt sinh viên nên trả lời để đạt điểm tối đa\n"
             "   - 'source_chunk_ids': Mảng các số nguyên chunk_id có liên quan được cung cấp bên dưới\n"
             "   - 'recommended_seconds': 120\n"
             "3. TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON có key 'questions', TUYỆT ĐỐI KHÔNG VIẾT CHỮ NÀO KHÁC NGOÀI JSON.\n"
@@ -185,11 +185,11 @@ class QuestionGeneratorService:
             '  "questions": [\n'
             '    {\n'
             '      "order_index": 1,\n'
-            '      "question_text": "Mục tiêu nghiên cứu chính của đề tài là gì và giải quyết bài toán thực tế nào?",\n'
+            '      "question_text": "Mục tiêu nghiên cứu chính của đề tài là gì và giải pháp kỹ thuật bạn xây dựng giải quyết bài toán thực tế nào?",\n'
             '      "difficulty": "easy",\n'
             '      "topic_competency": "Tổng quan đề tài",\n'
-            '      "expected_answer_outline": "- Nêu bối cảnh thực tế...\\n- Nêu 3 mục tiêu cụ thể...\\n- Xác định phạm vi...",\n'
-            '      "source_chunk_ids": [101, 102],\n'
+            '      "expected_answer_outline": "- Nêu rõ bối cảnh thực tế và lý do lựa chọn phát triển hệ thống.\\n- Trình bày 2-3 mục tiêu định lượng cốt lõi mà giải pháp kỹ thuật đã hoàn thành.\\n- Khẳng định giá trị thực tiễn mang lại cho người dùng mục tiêu.",\n'
+            '      "source_chunk_ids": [101],\n'
             '      "recommended_seconds": 120\n'
             '    }\n'
             '  ]\n'
@@ -234,8 +234,8 @@ class QuestionGeneratorService:
             ],
             "stream": False,
             "options": {
-                "temperature": 0.3,
-                "num_predict": 1800,
+                "temperature": 0.8,
+                "num_predict": 2200,
             },
         }
 
@@ -472,29 +472,42 @@ class QuestionGeneratorService:
         if not text:
             return None
 
-        # Try direct parse
+        # 1. Clean markdown code fence if present
+        cleaned = text.strip()
+        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned, re.IGNORECASE)
+        if match:
+            candidate = match.group(1).strip()
+        else:
+            start = cleaned.find("{")
+            end = cleaned.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                candidate = cleaned[start : end + 1]
+            else:
+                candidate = cleaned
+
+        # 2. Try direct load
         try:
-            return json.loads(text)
+            return json.loads(candidate)
         except Exception:
             pass
 
-        # Try markdown code fence extraction
-        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text, re.IGNORECASE)
-        if match:
-            candidate = match.group(1).strip()
-            try:
-                return json.loads(candidate)
-            except Exception:
-                pass
+        # 3. Clean trailing commas and try again
+        try:
+            sanitized = re.sub(r",\s*([\]}])", r"\1", candidate)
+            return json.loads(sanitized)
+        except Exception:
+            pass
 
-        # Try finding outer braces { ... }
-        start = text.find("{")
-        end = text.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            try:
-                return json.loads(text[start : end + 1])
-            except Exception:
-                pass
+        # 4. If truncated at the end, attempt emergency balance of brackets
+        try:
+            if candidate.startswith("{") and not candidate.endswith("}"):
+                # Count open brackets and braces
+                open_braces = candidate.count("{") - candidate.count("}")
+                open_brackets = candidate.count("[") - candidate.count("]")
+                balanced = candidate.rstrip(", \n\r\t") + ("]" * max(0, open_brackets)) + ("}" * max(0, open_braces))
+                return json.loads(balanced)
+        except Exception:
+            pass
 
         return None
 
