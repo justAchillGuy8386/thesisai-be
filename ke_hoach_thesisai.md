@@ -333,8 +333,8 @@ Sinh viên bấm Nộp câu 1
 - Nút "Kết thúc phiên" khi hoàn thành câu cuối cùng.
 
 #### Tiêu chí hoàn thành:
-- [ ] Sinh viên hoàn thành trọn vẹn 12–15 câu hỏi liên tục mà không gặp lỗi nghẽn giao diện.
-- [ ] Khi sinh viên kết thúc phiên, hệ thống kiểm tra trạng thái các job ngầm.
+- [x] Sinh viên hoàn thành trọn vẹn 12–15 câu hỏi liên tục mà không gặp lỗi nghẽn giao diện.
+- [x] Khi sinh viên kết thúc phiên, hệ thống kiểm tra trạng thái các job ngầm.
 
 ---
 
