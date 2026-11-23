@@ -44,6 +44,7 @@ class STTService:
         audio_path: str,
         language: str = "vi",
         beam_size: int = 5,
+        initial_prompt: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Transcribe an audio file into text and segment timestamps.
@@ -56,12 +57,18 @@ class STTService:
         if file_size < 100:
             raise ValueError("Tệp âm thanh quá ngắn hoặc không có dữ liệu.")
 
+        prompt = (
+            initial_prompt
+            or "Đây là buổi thuyết trình và trả lời phản biện đồ án hoặc khóa luận tốt nghiệp đại học. Sinh viên giải trình phương pháp nghiên cứu, cơ sở lý thuyết, số liệu phân tích và kết quả thực nghiệm trước Hội đồng chuyên môn."
+        )
+
         try:
             model = self._get_model()
             segments_gen, info = model.transcribe(
                 audio_path,
                 language=language,
                 beam_size=beam_size,
+                initial_prompt=prompt,
                 vad_filter=True,  # Filter out background noise & non-speech
                 vad_parameters=dict(min_silence_duration_ms=500),
             )

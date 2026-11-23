@@ -112,6 +112,7 @@ class EvaluationService:
             transcript=transcript,
             source_chunks=source_chunks_text,
             project_title=project.title if project else "Đồ án tốt nghiệp",
+            project_topic=project.topic if project and project.topic else "Khoa học & Đào tạo Đại học",
         )
 
         # 5. Tổng hợp điểm số Rubric
@@ -205,18 +206,19 @@ class EvaluationService:
         transcript: str,
         source_chunks: List[str],
         project_title: str,
+        project_topic: str = "Khoa học & Đào tạo Đại học",
     ) -> Dict[str, Any]:
         """
-        Gửi prompt đến Qwen2.5:7b qua Ollama để chấm điểm chuyên môn và sinh nhận xét.
+        Gửi prompt đến LLM qua Ollama để chấm điểm chuyên môn và sinh nhận xét học thuật.
         Tự động kích hoạt Heuristic Fallback nếu LLM không phản hồi hoặc sinh lỗi.
         """
         system_prompt = (
-            "Bạn là Giám khảo Phản biện của Hội đồng Chấm Đồ Án Tốt Nghiệp Đại học chuyên ngành Công nghệ Thông tin. "
+            f"Bạn là Giám khảo Phản biện của Hội đồng Chấm Đồ Án / Khóa Luận Tốt Nghiệp Đại học chuyên ngành {project_topic}. "
             "Nhiệm vụ của bạn là đánh giá công tâm, khắt khe nhưng mang tính xây dựng đối với câu trả lời của sinh viên.\n\n"
             "Tiêu chí đánh giá nội dung (thang điểm 0.0 - 10.0):\n"
-            "1. technical_accuracy (Độ chính xác kỹ thuật - 40% trọng số): Tính chính xác của các khái niệm, công nghệ, kiến trúc đã trình bày.\n"
+            "1. technical_accuracy (Độ chính xác học thuật & chuyên môn - 40% trọng số): Tính chuẩn xác của các khái niệm, cơ sở lý thuyết, phương pháp luận chuyên ngành đã trình bày.\n"
             "2. completeness (Độ đầy đủ - 35% trọng số): Mức độ bao quát và trả lời đúng trọng tâm câu hỏi so với đáp án mong đợi.\n"
-            "3. reasoning_defense (Lập luận bảo vệ & phản biện - 25% trọng số): Phân tích ưu/nhược điểm (trade-offs), lập luận logic, tự tin bảo vệ giải pháp.\n\n"
+            "3. reasoning_defense (Lập luận bảo vệ & phản biện - 25% trọng số): Phân tích ưu/nhược điểm, tính chặt chẽ logic, tự tin bảo vệ giải pháp nghiên cứu.\n\n"
             "Định dạng phản hồi BẮT BUỘC: Bạn CHỈ ĐƯỢC XUẤT RA MỘT KHỐI JSON DUY NHẤT (không có lời mở đầu hay kết luận), tuân thủ định dạng sau:\n"
             "{\n"
             '  "technical_accuracy": 7.5,\n'
@@ -230,7 +232,8 @@ class EvaluationService:
         )
 
         user_content = (
-            f"=== ĐỀ TÀI ĐỒ ÁN ===\n{project_title}\n\n"
+            f"=== ĐỀ TÀI ĐỒ ÁN ===\n{project_title}\n"
+            f"Chuyên ngành: {project_topic}\n\n"
             f"=== CÂU HỎI PHẢN BIỆN (Mức độ: {question.difficulty.upper()} | Chủ đề: {question.topic_competency}) ===\n"
             f"{question.question_text}\n\n"
             f"=== ĐỀ CƯƠNG ĐÁP ÁN MONG ĐỢI TỪ TÀI LIỆU ===\n"
@@ -320,8 +323,8 @@ class EvaluationService:
             ],
             "weaknesses": [weakness],
             "suggestions": [
-                "Nên trả lời trực diện vào luận điểm trước, sau đó dẫn chứng số liệu hoặc cơ chế thực thi cụ thể.",
-                "Cần chuẩn bị phương án so sánh trade-off với các giải pháp công nghệ phổ biến khác.",
+                "Nên trả lời trực diện vào luận điểm trước, sau đó dẫn chứng số liệu hoặc phương pháp luận cụ thể.",
+                "Cần chuẩn bị phương án so sánh, phân tích ưu/nhược điểm với các nghiên cứu hoặc hướng tiếp cận khác.",
             ],
             "model_answer": question.expected_answer_outline,
             "is_fallback": True,

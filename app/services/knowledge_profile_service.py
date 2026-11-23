@@ -244,10 +244,11 @@ Hãy đọc kỹ và tạo Hồ sơ Tri thức Đồ án chuẩn JSON theo đún
         joined_text = " ".join([c.text for c in chunks[:35]]).lower()
 
         # Domain detection keywords
-        is_it = any(w in joined_text for w in ["phần mềm", "website", "lập trình", "database", "api", "laravel", "python", "mysql", "react", "ứng dụng"]) or "tin học" in major.lower() or "phần mềm" in major.lower()
-        is_business = any(w in joined_text for w in ["doanh thu", "chiến lược", "marketing", "khách hàng", "tài chính", "kế toán", "kinh doanh", "thị trường", "sản phẩm"]) or "kinh tế" in major.lower() or "quản trị" in major.lower()
-        is_civil = any(w in joined_text for w in ["kết cấu", "bê tông", "móng", "thi công", "công trình", "bản vẽ", "tải trọng", "cốt thép"]) or "xây dựng" in major.lower() or "kiến trúc" in major.lower()
-        is_medical = any(w in joined_text for w in ["bệnh nhân", "lâm sàng", "chẩn đoán", "điều trị", "dược", "y tế", "thuốc", "bệnh viện"]) or "y" in major.lower() or "dược" in major.lower()
+        is_it = any(w in joined_text for w in ["phần mềm", "website", "lập trình", "database", "api", "laravel", "python", "mysql", "react", "ứng dụng"]) or "tin học" in major.lower() or "phần mềm" in major.lower() or "công nghệ thông tin" in major.lower()
+        is_business = any(w in joined_text for w in ["doanh thu", "chiến lược", "marketing", "khách hàng", "tài chính", "kế toán", "kinh doanh", "thị trường", "sản phẩm"]) or "kinh tế" in major.lower() or "quản trị" in major.lower() or "thương mại" in major.lower()
+        is_civil = any(w in joined_text for w in ["kết cấu", "bê tông", "móng", "thi công", "công trình", "bản vẽ", "tải trọng", "cốt thép"]) or "xây dựng" in major.lower() or "kiến trúc" in major.lower() or "cầu đường" in major.lower()
+        is_medical = any(w in joined_text for w in ["bệnh nhân", "lâm sàng", "chẩn đoán", "điều trị", "dược", "y tế", "thuốc", "bệnh viện", "phác đồ"]) or "y" in major.lower() or "dược" in major.lower() or "điều dưỡng" in major.lower()
+        is_social_or_law = any(w in joined_text for w in ["pháp luật", "luật", "bộ luật", "tư pháp", "xã hội", "giáo dục", "sư phạm", "giảng dạy", "ngôn ngữ", "báo chí", "truyền thông"]) or "luật" in major.lower() or "xã hội" in major.lower() or "sư phạm" in major.lower() or "giáo dục" in major.lower()
 
         if is_it:
             tech_patterns = ["Laravel", "FastAPI", "React", "Next.js", "Vue", "Node.js", "Python", "PHP", "MySQL", "PostgreSQL", "Docker", "RESTful API", "VNPay", "MoMo", "ZaloPay", "JWT", "Bcrypt", "Redis"]
@@ -377,6 +378,91 @@ Hãy đọc kỹ và tạo Hồ sơ Tri thức Đồ án chuẩn JSON theo đún
                     question="Bạn kiểm tra điều kiện chọc thủng của đài móng và khống chế vết nứt bề mặt cấu kiện như thế nào?",
                     reason="Kiểm tra chi tiết tính toán kỹ thuật và sự nắm vững các công thức trong tiêu chuẩn TCVN.",
                     suggested_answer_hint="Dẫn chứng công thức kiểm tra ứng suất nén/cắt và bề rộng khe nứt giới hạn theo TCVN 5574.",
+                ),
+            ]
+
+        elif is_medical:
+            summary = (
+                f"Đề tài '{title}' (Chuyên ngành: {major}) tập trung nghiên cứu thực nghiệm lâm sàng / cận lâm sàng, "
+                f"đánh giá hiệu quả phác đồ điều trị, dược tính hoặc quy trình chăm sóc sức khỏe. "
+                f"Đề tài tuân thủ các nguyên tắc đạo đức y sinh học và quy trình thực hành lâm sàng chuẩn mực."
+            )
+            objectives = [
+                f"Khảo sát đặc điểm dịch tễ, triệu chứng và các chỉ số xét nghiệm liên quan đến đề tài '{title}'.",
+                "Đánh giá hiệu quả, tính an toàn và khả năng đáp ứng của phương pháp/phác đồ can thiệp.",
+                "Phân tích các yếu tố liên quan, tai biến hoặc tác dụng không mong muốn trong quá trình theo dõi.",
+                "Đề xuất khuyến nghị chuyên môn ứng dụng vào công tác chẩn đoán, điều trị hoặc bào chế dược phẩm.",
+            ]
+            methodology_and_tech = [
+                "Thiết kế nghiên cứu: Nghiên cứu mô tả cắt ngang, tiến cứu có can thiệp hoặc thử nghiệm lâm sàng có đối chứng.",
+                "Công cụ thu thập & phân tích: Bệnh án nghiên cứu chuẩn hóa, xét nghiệm chuyên sâu và phần mềm thống kê y học (SPSS/MedCalc).",
+                "Đạo đức y sinh: Đảm bảo sự đồng thuận của đối tượng tham gia và phê duyệt của Hội đồng Đạo đức trong nghiên cứu y sinh.",
+            ]
+            defense_weaknesses = [
+                "Cỡ mẫu nghiên cứu: Số lượng bệnh nhân/đối tượng theo dõi còn hạn chế do điều kiện thời gian và nguồn lực.",
+                "Thời gian theo dõi: Cần kéo dài thời gian theo dõi dọc để đánh giá toàn diện các biến chứng hoặc đáp ứng muộn.",
+                "Yếu tố gây nhiễu: Một số bệnh lý nền hoặc yếu tố môi trường chưa thể kiểm soát hoàn toàn trong quá trình thử nghiệm.",
+            ]
+            anticipated_questions = [
+                AnticipatedQuestion(
+                    role="CHỦ TỊCH HỘI ĐỒNG",
+                    question=f"Kết quả nghiên cứu của đề tài '{title}' có thể ứng dụng trực tiếp vào công tác khám chữa bệnh / điều trị thực tế tại cơ sở y tế như thế nào?",
+                    reason="Đánh giá giá trị thực tiễn và tính an toàn khi chuyển giao ứng dụng lâm sàng.",
+                    suggested_answer_hint="Nhấn mạnh vào tính an toàn, hiệu quả điều trị vượt trội và khả năng triển khai phù hợp với điều kiện cơ sở y tế.",
+                ),
+                AnticipatedQuestion(
+                    role="GIẢNG VIÊN PHẢN BIỆN",
+                    question="Tiêu chuẩn lựa chọn và tiêu chuẩn loại trừ bệnh nhân/mẫu nghiên cứu được xác lập dựa trên cơ sở khoa học nào?",
+                    reason="Chất vấn tính chặt chẽ của việc chọn mẫu và tránh sai số chọn (Selection Bias).",
+                    suggested_answer_hint="Nêu rõ các tiêu chí đưa vào và loại trừ bệnh nhân theo hướng dẫn chuyên môn của Bộ Y tế/WHO.",
+                ),
+                AnticipatedQuestion(
+                    role="ỦY VIÊN HỘI ĐỒNG",
+                    question="Bạn đã xử lý và kiểm soát các tác dụng phụ hoặc yếu tố nhiễu trong quá trình can thiệp/thực nghiệm ra sao?",
+                    reason="Kiểm tra mức độ theo dõi sát sao quy trình thực nghiệm và khả năng xử trí tình huống y khoa.",
+                    suggested_answer_hint="Mô tả quy trình theo dõi chỉ số sinh tồn/xét nghiệm định kỳ và phác đồ xử trí kịp thời các biến cố bất lợi.",
+                ),
+            ]
+
+        elif is_social_or_law:
+            summary = (
+                f"Đề tài '{title}' (Chuyên ngành: {major}) tập trung phân tích thực trạng pháp lý, xã hội hoặc phương pháp sư phạm, "
+                f"làm rõ các bất cập lý luận và thực tiễn, từ đó đề xuất hệ thống giải pháp và khuyến nghị chính sách nhằm hoàn thiện quy định và nâng cao hiệu quả áp dụng."
+            )
+            objectives = [
+                f"Hệ thống hóa cơ sở lý luận, các quy định pháp luật hoặc học thuyết liên quan đến đề tài '{title}'.",
+                "Khảo sát, đánh giá thực trạng thực thi, áp dụng pháp luật hoặc hiệu quả mô hình giáo dục/truyền thông trong thực tiễn.",
+                "Chỉ ra những vướng mắc, bất cập và nguyên nhân của những tồn tại trong quy định và thực tiễn.",
+                "Đề xuất các giải pháp lập pháp, hoàn thiện cơ chế thực thi và nâng cao nhận thức cộng đồng/chuyên môn.",
+            ]
+            methodology_and_tech = [
+                "Phương pháp luận: Kết hợp phương pháp phân tích quy phạm, phương pháp so sánh luật học, điều tra xã hội học và phỏng vấn sâu.",
+                "Tài liệu căn cứ: Hệ thống văn bản quy phạm pháp luật, án lệ thực tiễn, báo cáo tổng kết ngành và các khảo sát thực tế.",
+                "Tiêu chuẩn đánh giá: Tính hợp hiến, hợp pháp, tính thống nhất của hệ thống pháp luật và tính khả thi xã hội.",
+            ]
+            defense_weaknesses = [
+                "Phạm vi khảo sát thực tế: Dữ liệu thực tiễn chủ yếu tập trung tại một số địa bàn hoặc cơ quan nhất định.",
+                "Tính biến động của chính sách: Các đề xuất phụ thuộc vào định hướng hoàn thiện thể chế và nguồn lực thực thi ngân sách.",
+                "Đo lường tác động xã hội: Cần thêm thời gian để kiểm chứng hiệu quả thực tế của các giải pháp lập pháp đề xuất.",
+            ]
+            anticipated_questions = [
+                AnticipatedQuestion(
+                    role="CHỦ TỊCH HỘI ĐỒNG",
+                    question=f"Các giải pháp và kiến nghị mà đề tài '{title}' đề xuất có tính khả thi như thế nào trong bối cảnh thực tiễn hiện nay?",
+                    reason="Đánh giá tính cấp thiết, sự phù hợp với chủ trương chính sách và tính khả thi khi đi vào cuộc sống.",
+                    suggested_answer_hint="Lập luận dựa trên tính tương thích với hệ thống pháp luật hiện hành và sự sẵn sàng của cơ chế thực thi.",
+                ),
+                AnticipatedQuestion(
+                    role="GIẢNG VIÊN PHẢN BIỆN",
+                    question="Căn cứ vào đâu bạn cho rằng nguyên nhân chính của bất cập bắt nguồn từ quy định pháp luật thay vì khâu tổ chức thi hành?",
+                    reason="Chất vấn tính khách quan và chiều sâu phân tích nguyên nhân gốc rễ của vấn đề nghiên cứu.",
+                    suggested_answer_hint="Dẫn chứng các vụ việc thực tế hoặc án lệ cho thấy quy định còn kẽ hở, chồng chéo dẫn đến khó khăn khi áp dụng.",
+                ),
+                AnticipatedQuestion(
+                    role="ỦY VIÊN HỘI ĐỒNG",
+                    question="Nếu kiến nghị sửa đổi quy định của bạn được thông qua, cần có giải pháp chuyển tiếp nào để không gây xáo trộn xã hội?",
+                    reason="Kiểm tra tầm nhìn chính sách toàn diện và khả năng dự báo tác động pháp luật của sinh viên.",
+                    suggested_answer_hint="Đề xuất lộ trình thực hiện từng bước, ban hành văn bản hướng dẫn chi tiết và thời gian quá độ phù hợp.",
                 ),
             ]
 

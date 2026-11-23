@@ -163,20 +163,20 @@ class QuestionGeneratorService:
     ) -> List[GeneratedQuestionItem]:
         """Query local Ollama LLM to produce structured question JSON."""
         system_prompt = (
-            "Bạn là Chuyên gia Khảo thí và Giảng viên Thư ký Hội đồng Chấm Đồ Án Tốt Nghiệp Đại Học.\n"
-            "Nhiệm vụ của bạn là đọc thông tin đồ án và tài liệu trích dẫn để sinh bộ câu hỏi bảo vệ (~12 câu) "
-            "phân tầng độ khó chuẩn mực (Dễ: ~3-4 câu, Trung bình: ~5-6 câu, Khó: ~3-4 câu).\n\n"
+            "Bạn là Chuyên gia Khảo thí và Giảng viên Thư ký Hội đồng Chấm Đồ Án / Khóa Luận Tốt Nghiệp Đại Học.\n"
+            "Nhiệm vụ của bạn là đọc thông tin đề tài và tài liệu trích dẫn để sinh bộ câu hỏi bảo vệ (~12 câu) "
+            "phân tầng độ khó chuẩn mực học thuật (Dễ: ~3-4 câu, Trung bình: ~5-6 câu, Khó: ~3-4 câu).\n\n"
             "YÊU CẦU BẮT BUỘC:\n"
-            "1. Phân bổ độ khó:\n"
-            "   - 'easy': Tổng quan đề tài, bài toán thực tế, lý do chọn đề tài, đối tượng người dùng, phạm vi nghiên cứu.\n"
-            "   - 'medium': Thiết kế kiến trúc, công nghệ đã chọn và lý do so sánh, lược đồ CSDL/mô hình dữ liệu, luồng nghiệp vụ chính, thiết kế API.\n"
-            "   - 'hard': Khả năng chịu tải và scale, xử lý đồng thời (concurrency/race conditions), bảo mật & xác thực, ngoại lệ & rollback, hạn chế lớn nhất và hướng phát triển.\n"
+            "1. Phân bổ độ khó (Thang đo tư duy học thuật Bloom):\n"
+            "   - 'easy': Bối cảnh thực tiễn, tính cấp thiết, mục tiêu nghiên cứu, đối tượng thụ hưởng và phạm vi/ranh giới nghiên cứu của đề tài.\n"
+            "   - 'medium': Cơ sở lý thuyết nền tảng, phương pháp luận/công cụ chuyên môn đã áp dụng, quy trình thực nghiệm/mô hình hóa, phân tích số liệu và kết quả đạt được.\n"
+            "   - 'hard': Đánh giá độ tin cậy của phương pháp/mẫu khảo sát, xử lý rủi ro và các tình huống ngoại lệ/biến động thực tế, hạn chế lớn nhất và hướng phát triển tiếp theo.\n"
             "2. Mỗi câu hỏi PHẢI CÓ:\n"
             "   - 'order_index': Thứ tự từ 1 đến N\n"
             "   - 'question_text': Câu hỏi ngắn gọn, sâu sắc, mang phong thái hội đồng phản biện học thuật\n"
             "   - 'difficulty': 'easy' | 'medium' | 'hard'\n"
-            "   - 'topic_competency': Tên lĩnh vực chuyên môn (VD: 'Kiến trúc hệ thống', 'Cơ sở dữ liệu', 'Bảo mật', 'Quy trình nghiệp vụ')\n"
-            "   - 'expected_answer_outline': Dàn ý gợi ý 2-3 gạch đầu dòng rõ ràng (- Ý 1...\\n- Ý 2...\\n- Ý 3...), chỉ rõ các luận điểm kỹ thuật then chốt sinh viên nên trả lời để đạt điểm tối đa\n"
+            "   - 'topic_competency': Tên lĩnh vực / năng lực chuyên môn (VD: 'Tổng quan & Tính cấp thiết', 'Phương pháp nghiên cứu', 'Mô hình giải pháp', 'Phân tích dữ liệu', 'Đánh giá & Hạn chế')\n"
+            "   - 'expected_answer_outline': Dàn ý gợi ý 2-3 gạch đầu dòng rõ ràng (- Ý 1...\\n- Ý 2...\\n- Ý 3...), chỉ rõ các luận điểm then chốt sinh viên nên trả lời để đạt điểm tối đa\n"
             "   - 'source_chunk_ids': Mảng các số nguyên chunk_id có liên quan được cung cấp bên dưới\n"
             "   - 'recommended_seconds': 120\n"
             "3. TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON có key 'questions', TUYỆT ĐỐI KHÔNG VIẾT CHỮ NÀO KHÁC NGOÀI JSON.\n"
@@ -185,10 +185,10 @@ class QuestionGeneratorService:
             '  "questions": [\n'
             '    {\n'
             '      "order_index": 1,\n'
-            '      "question_text": "Mục tiêu nghiên cứu chính của đề tài là gì và giải pháp kỹ thuật bạn xây dựng giải quyết bài toán thực tế nào?",\n'
+            '      "question_text": "Mục tiêu nghiên cứu chính của đề tài là gì và giải pháp bạn xây dựng giải quyết bài toán thực tế nào?",\n'
             '      "difficulty": "easy",\n'
             '      "topic_competency": "Tổng quan đề tài",\n'
-            '      "expected_answer_outline": "- Nêu rõ bối cảnh thực tế và lý do lựa chọn phát triển hệ thống.\\n- Trình bày 2-3 mục tiêu định lượng cốt lõi mà giải pháp kỹ thuật đã hoàn thành.\\n- Khẳng định giá trị thực tiễn mang lại cho người dùng mục tiêu.",\n'
+            '      "expected_answer_outline": "- Nêu rõ bối cảnh thực tế và lý do lựa chọn nghiên cứu đề tài.\\n- Trình bày 2-3 mục tiêu cốt lõi mà nghiên cứu/sản phẩm đã hoàn thành.\\n- Khẳng định giá trị thực tiễn mang lại cho đối tượng thụ hưởng.",\n'
             '      "source_chunk_ids": [101],\n'
             '      "recommended_seconds": 120\n'
             '    }\n'
@@ -299,10 +299,11 @@ class QuestionGeneratorService:
         knowledge profile, and grounded chunks.
         """
         title = project.title
-        tech_list = profile_data.methodology_and_tech if profile_data and profile_data.methodology_and_tech else []
-        tech_str = ", ".join(tech_list[:4]) if tech_list else "các công nghệ đã chọn trong đồ án"
+        major = project.topic or "chuyên ngành"
+        method_list = profile_data.methodology_and_tech if profile_data and profile_data.methodology_and_tech else []
+        method_str = ", ".join(method_list[:3]) if method_list else "phương pháp luận và công cụ chuyên ngành đã lựa chọn"
         weakness_list = profile_data.defense_weaknesses if profile_data and profile_data.defense_weaknesses else []
-        weakness_str = weakness_list[0] if weakness_list else "khả năng mở rộng và chịu tải cao"
+        weakness_str = weakness_list[0] if weakness_list else "phạm vi dữ liệu khảo sát và điều kiện kiểm thử thực tế"
 
         chunk_ids = [c.id for c in chunks]
         c_p1 = chunk_ids[:2] if len(chunk_ids) >= 2 else chunk_ids
@@ -310,39 +311,39 @@ class QuestionGeneratorService:
         c_p3 = chunk_ids[5:8] if len(chunk_ids) >= 8 else chunk_ids
         c_p4 = chunk_ids[8:] if len(chunk_ids) >= 9 else chunk_ids
 
-        # 12 Grounded Academic Questions
+        # 12 Universal Academic Defense Questions (Applicable to IT, Economics, Construction, Medicine, Social Sciences, etc.)
         templates = [
             # --- EASY (3 câu) ---
             {
                 "difficulty": QuestionDifficulty.EASY,
                 "topic": "Tổng quan & Tính cấp thiết",
-                "text": f"Bạn hãy trình bày tóm tắt mục tiêu nghiên cứu và tính cấp thiết thực tiễn của đề tài '{title}'?",
+                "text": f"Bạn hãy trình bày tóm tắt mục tiêu nghiên cứu và tính cấp thiết thực tiễn của đề tài '{title}' trong bối cảnh ngành {major}?",
                 "outline": (
-                    "- Nêu rõ bối cảnh và lý do chọn đề tài (vấn đề thực tế cần giải quyết).\n"
-                    "- Nêu 2-3 mục tiêu cốt lõi mà sản phẩm/nghiên cứu hướng tới.\n"
-                    "- Khẳng định giá trị thực tiễn mang lại cho đối tượng người dùng mục tiêu."
+                    "- Nêu rõ bối cảnh thực tiễn và lý do lựa chọn nghiên cứu đề tài.\n"
+                    "- Nêu 2-3 mục tiêu cốt lõi mà đề tài/sản phẩm hướng tới giải quyết.\n"
+                    "- Khẳng định giá trị thực tiễn mang lại cho đối tượng thụ hưởng hoặc đơn vị ứng dụng."
                 ),
                 "chunks": c_p1,
             },
             {
                 "difficulty": QuestionDifficulty.EASY,
-                "topic": "Phạm vi & Đối tượng sử dụng",
-                "text": "Phạm vi nghiên cứu của đồ án được giới hạn như thế nào? Những chức năng nào thuộc phạm vi triển khai và chức năng nào nằm ngoài phạm vi nghiên cứu?",
+                "topic": "Phạm vi & Đối tượng nghiên cứu",
+                "text": "Phạm vi nghiên cứu của đề tài được giới hạn như thế nào? Những nội dung nào nằm trong phạm vi thực hiện và nội dung nào nằm ngoài phạm vi nghiên cứu?",
                 "outline": (
-                    "- Liệt kê rõ ranh giới nghiên cứu (Boundary) của đề tài.\n"
-                    "- Nêu rõ các phân hệ/module đã hoàn thành và hoạt động tốt.\n"
-                    "- Thẳng thắn chỉ ra các tính năng nâng cao chưa thực hiện do giới hạn thời gian/nguồn lực."
+                    "- Xác định rõ ranh giới nghiên cứu (không gian, thời gian, đối tượng khảo sát/thực nghiệm).\n"
+                    "- Nêu các phần việc/nội dung trọng tâm đã hoàn thành tốt.\n"
+                    "- Thẳng thắn chỉ ra các khía cạnh chưa thực hiện do giới hạn nguồn lực và thời gian."
                 ),
                 "chunks": c_p1,
             },
             {
                 "difficulty": QuestionDifficulty.EASY,
-                "topic": "Khảo sát hiện trạng & So sánh",
-                "text": "Trong quá trình khảo sát thực tế, bạn nhận thấy các giải pháp hiện có trên thị trường có những hạn chế gì dẫn đến việc bạn quyết định xây dựng giải pháp này?",
+                "topic": "Tổng quan nghiên cứu & So sánh",
+                "text": "Trong quá trình khảo sát thực tế, bạn nhận thấy các nghiên cứu hoặc giải pháp hiện có có những ưu nhược điểm gì dẫn đến việc bạn đề xuất hướng tiếp cận này?",
                 "outline": (
-                    "- Chỉ ra 1-2 sản phẩm hoặc giải pháp tương tự trên thị trường.\n"
-                    "- Phân tích ưu/nhược điểm của các giải pháp đó (chi phí, độ phức tạp, tính đặc thù).\n"
-                    "- Nêu rõ điểm khác biệt hoặc cải tiến mà đề tài của bạn mang lại."
+                    "- Chỉ ra 1-2 mô hình/giải pháp hoặc nghiên cứu tương tự đã có trên thực tế.\n"
+                    "- Phân tích ưu/nhược điểm hoặc khoảng trống nghiên cứu của các giải pháp đó.\n"
+                    "- Nêu rõ điểm mới, cải tiến hoặc tính phù hợp vượt trội mà đề tài mang lại."
                 ),
                 "chunks": c_p1,
             },
@@ -350,67 +351,67 @@ class QuestionGeneratorService:
             # --- MEDIUM (6 câu) ---
             {
                 "difficulty": QuestionDifficulty.MEDIUM,
-                "topic": "Kiến trúc hệ thống & Lựa chọn công nghệ",
-                "text": f"Hãy phân tích kiến trúc tổng thể của hệ thống và lý do bạn lựa chọn {tech_str} thay vì các giải pháp công nghệ tương đương khác?",
+                "topic": "Cơ sở lý thuyết & Phương pháp luận",
+                "text": f"Hãy phân tích cơ sở lý thuyết nền tảng và lý do bạn lựa chọn {method_str} để thực hiện đề tài thay vì các hướng tiếp cận khác?",
                 "outline": (
-                    "- Mô tả mô hình kiến trúc phân tầng (Presentation, Business Logic, Data Access).\n"
-                    "- Giải thích cơ sở lựa chọn công nghệ dựa trên: tốc độ phát triển, cộng đồng hỗ trợ, hiệu năng và tính phù hợp với bài toán.\n"
-                    "- Nêu được sự đánh đổi (Trade-off) khi chọn công nghệ này."
+                    "- Trình bày khung lý thuyết và phương pháp luận chuyên ngành đã áp dụng.\n"
+                    "- Giải thích căn cứ khoa học của việc lựa chọn phương pháp/công cụ này.\n"
+                    "- Nêu được sự đánh đổi (Trade-offs) hoặc thách thức khi áp dụng phương pháp này."
                 ),
                 "chunks": c_p2,
             },
             {
                 "difficulty": QuestionDifficulty.MEDIUM,
-                "topic": "Thiết kế Cơ sở dữ liệu",
-                "text": "Thiết kế cơ sở dữ liệu quan hệ của hệ thống đã đạt chuẩn hóa bậc mấy (3NF)? Các bảng thực thể quan trọng nhất và quan hệ khóa ngoại giữa chúng được thiết lập ra sao?",
+                "topic": "Thu thập & Xử lý số liệu",
+                "text": "Quy trình thu thập số liệu, khảo sát mẫu hoặc tiến hành thực nghiệm của đề tài được tổ chức như thế nào để đảm bảo tính khách quan và tin cậy?",
                 "outline": (
-                    "- Khẳng định mức độ chuẩn hóa CSDL (thường là chuẩn 3NF).\n"
-                    "- Nêu tên và vai trò của 3-4 bảng trung tâm (User, Order, Product, Transaction...).\n"
-                    "- Giải thích cách thiết lập ràng buộc toàn vẹn khóa ngoại (Foreign Key) và index hỗ trợ tìm kiếm."
+                    "- Mô tả phương pháp chọn mẫu, quy mô mẫu hoặc điều kiện thực nghiệm.\n"
+                    "- Trình bày các bước làm sạch, xử lý và chuẩn hóa dữ liệu/số liệu.\n"
+                    "- Nêu biện pháp kiểm soát sai số và độ tin cậy của kết quả thu thập."
                 ),
                 "chunks": c_p2,
             },
             {
                 "difficulty": QuestionDifficulty.MEDIUM,
-                "topic": "Luồng xử lý nghiệp vụ cốt lõi",
-                "text": "Trình bày chi tiết luồng xử lý của một quy trình nghiệp vụ quan trọng nhất trong đồ án từ khi người dùng thao tác đến khi dữ liệu được xác nhận thành công vào cơ sở dữ liệu?",
+                "topic": "Mô hình hóa & Quy trình giải pháp",
+                "text": "Trình bày chi tiết luồng xử lý hoặc quy trình thực hiện một nghiệp vụ/nội dung quan trọng nhất trong đề tài từ khâu tiếp nhận thông tin đến kết quả cuối cùng?",
                 "outline": (
-                    "- Mô tả từng bước của luồng xử lý theo trình tự thời gian.\n"
-                    "- Giải thích cơ chế validation dữ liệu ở cả client và server.\n"
-                    "- Nêu rõ điểm kết thúc: cập nhật trạng thái trong database và thông báo phản hồi cho người dùng."
+                    "- Mô tả từng bước của quy trình theo trình tự logic thời gian.\n"
+                    "- Giải thích các quy tắc kiểm tra tính hợp lệ và xử lý tại từng giai đoạn.\n"
+                    "- Nêu rõ kết quả đầu ra và cách thức chuyển giao thông tin/dữ liệu."
                 ),
                 "chunks": c_p3,
             },
             {
                 "difficulty": QuestionDifficulty.MEDIUM,
-                "topic": "Thiết kế & Kiểm thử API",
-                "text": "Hệ thống thiết kế các giao diện lập trình ứng dụng (API) theo chuẩn nào? Bạn đã tổ chức kiểm thử chức năng và kiểm thử API (Testing) như thế nào?",
+                "topic": "Đo lường & Kiểm chứng kết quả",
+                "text": "Bạn đã sử dụng các chỉ số, tiêu chí định lượng hoặc công cụ nào để kiểm chứng và đánh giá mức độ hoàn thành mục tiêu nghiên cứu?",
                 "outline": (
-                    "- Trình bày chuẩn RESTful API: các phương thức HTTP (GET, POST, PUT, DELETE) và mã trạng thái (200, 201, 400, 404, 500).\n"
-                    "- Trình bày công cụ kiểm thử đã sử dụng (Postman, Swagger, Unit Tests).\n"
-                    "- Nêu các ca kiểm thử chính (Happy case và Error case)."
+                    "- Liệt kê các chỉ số đo lường hiệu quả (KPI, độ chính xác, tỷ lệ cải thiện...).\n"
+                    "- Trình bày phương pháp so sánh đối chứng trước và sau khi áp dụng giải pháp.\n"
+                    "- Đưa ra nhận xét khách quan về kết quả thực nghiệm/khảo sát đạt được."
                 ),
                 "chunks": c_p3,
             },
             {
                 "difficulty": QuestionDifficulty.MEDIUM,
-                "topic": "Xác thực & Phân quyền người dùng",
-                "text": "Cơ chế xác thực (Authentication) và phân quyền (Authorization) trong hệ thống được hiện thực hóa như thế nào để ngăn chặn hành vi leo quyền trái phép?",
+                "topic": "Tuân thủ quy chuẩn & Tiêu chuẩn ngành",
+                "text": f"Giải pháp hoặc mô hình nghiên cứu của bạn tuân thủ các quy chuẩn, tiêu chuẩn kỹ thuật hoặc nguyên tắc đạo đức chuyên môn nào trong ngành {major}?",
                 "outline": (
-                    "- Giải thích cơ chế mã hóa mật khẩu (Bcrypt/Argon2) và quản lý phiên (JWT hoặc Session).\n"
-                    "- Nêu cơ chế Middleware kiểm tra vai trò người dùng (Role-based access control - RBAC).\n"
-                    "- Giải thích cách bảo vệ dữ liệu tài nguyên: người dùng chỉ được xem/sửa tài nguyên thuộc sở hữu của mình."
+                    "- Nêu các quy chuẩn/tiêu chuẩn ngành hoặc quy định pháp lý/đạo đức liên quan.\n"
+                    "- Giải thích cách đề tài hiện thực hóa việc đáp ứng các tiêu chuẩn đó.\n"
+                    "- Phân tích biện pháp bảo vệ tính toàn vẹn, bảo mật hoặc an toàn của dữ liệu/kết quả."
                 ),
                 "chunks": c_p3,
             },
             {
                 "difficulty": QuestionDifficulty.MEDIUM,
-                "topic": "Tích hợp dịch vụ bên thứ ba",
-                "text": "Hệ thống có tích hợp các dịch vụ bên thứ ba (như cổng thanh toán, gửi email, lưu trữ đám mây) hay không? Việc xử lý bất đồng bộ hoặc callback (IPN/Webhook) diễn ra như thế nào?",
+                "topic": "Tính khả thi & Điều kiện triển khai",
+                "text": "Để đưa giải pháp/mô hình của bạn ứng dụng vào thực tế tại cơ quan, doanh nghiệp hoặc thị trường, cần những điều kiện tiên quyết nào về nguồn lực và hạ tầng?",
                 "outline": (
-                    "- Liệt kê dịch vụ bên thứ ba đã tích hợp (PayOS, VNPay, Mailer...).\n"
-                    "- Giải thích luồng callback/webhook xác thực chữ ký (Checksum/Signature).\n"
-                    "- Nêu giải pháp tránh trùng lặp giao dịch (Idempotency) khi đối tác gọi lại nhiều lần."
+                    "- Đánh giá yêu cầu về nhân sự, kinh phí và trang thiết bị/hạ tầng cần thiết.\n"
+                    "- Phân tích tính khả thi về mặt chi phí - hiệu quả hoặc thời gian hoàn vốn/triển khai.\n"
+                    "- Đề xuất phương án thích ứng khi triển khai vào môi trường thực tế."
                 ),
                 "chunks": c_p3,
             },
@@ -418,34 +419,34 @@ class QuestionGeneratorService:
             # --- HARD (3 câu) ---
             {
                 "difficulty": QuestionDifficulty.HARD,
-                "topic": "Khả năng chịu tải & Điểm nghẽn hiệu năng",
-                "text": f"Hệ thống có khả năng chịu tải đồng thời (Scalability) ở mức độ nào? Điểm yếu được chỉ ra là '{weakness_str}', vậy nếu lượng người dùng tăng đột biến thì điểm nghẽn (bottleneck) đầu tiên sẽ xảy ra ở đâu?",
+                "topic": "Độ tin cậy & Độ nhạy của mô hình",
+                "text": f"Đề tài có giả định những điều kiện lý tưởng nào? Điểm yếu tiềm ẩn là '{weakness_str}', vậy nếu các điều kiện thực tế biến động bất lợi thì tính ổn định của giải pháp sẽ ra sao?",
                 "outline": (
-                    "- Thừa nhận giới hạn hiện tại của hệ thống (môi trường đơn máy chủ hoặc chưa cấu hình cluster).\n"
-                    "- Phân tích điểm nghẽn tiềm tàng: kết nối Database (Connection Pool), I/O ổ đĩa, hoặc tác vụ đồng bộ blocking.\n"
-                    "- Đề xuất phương án nâng cấp khi scale: bổ sung Caching (Redis), Load Balancer (Nginx), và chuyển tác vụ nặng sang hàng đợi (Message Queue / Celery / RabbitMQ)."
+                    "- Thừa nhận các giả định nền tảng và giới hạn hiện tại của mô hình/nghiên cứu.\n"
+                    "- Phân tích tác động khi các biến số ngoại cảnh hoặc số liệu đầu vào biến động bất thường.\n"
+                    "- Đề xuất kịch bản dự phòng và phương án tăng cường độ bền vững của giải pháp."
                 ),
                 "chunks": c_p4,
             },
             {
                 "difficulty": QuestionDifficulty.HARD,
-                "topic": "An toàn thông tin & Toàn vẹn dữ liệu",
-                "text": "Bạn đã áp dụng các biện pháp nào để bảo vệ hệ thống trước các lỗ hổng bảo mật phổ biến như SQL Injection, CSRF, XSS và nguy cơ tương tranh dữ liệu (Race Condition)?",
+                "topic": "Kiểm soát rủi ro & Xử lý ngoại lệ",
+                "text": "Bạn đã dự liệu những rủi ro kỹ thuật, sai số dữ liệu hoặc tình huống ngoại lệ (Edge Cases) nào nghiêm trọng nhất và giải pháp xử lý ứng phó ra sao?",
                 "outline": (
-                    "- Nêu giải pháp chống SQL Injection (ORM / Prepared Statements parameterized queries).\n"
-                    "- Nêu giải pháp chống CSRF (CSRF Token) và XSS (Sanitize input, escape output, CSP).\n"
-                    "- Trình bày cơ chế Database Transaction (ACID) và khóa dữ liệu (Pessimistic/Optimistic lock) khi xử lý số lượng tồn kho hoặc số dư tài khoản."
+                    "- Nêu 1-2 tình huống rủi ro hoặc ca lỗi ngoại lệ có thể làm gián đoạn/sai lệch kết quả.\n"
+                    "- Giải thích cơ chế cảnh báo sớm, cô lập sự cố và phục hồi trạng thái ổn định.\n"
+                    "- Chứng minh phương án phòng ngừa chủ động đã được tính toán trong đề tài."
                 ),
                 "chunks": c_p4,
             },
             {
                 "difficulty": QuestionDifficulty.HARD,
                 "topic": "Hạn chế & Hướng phát triển đồ án",
-                "text": "Nếu được đánh giá khách quan nhất, hạn chế kỹ thuật lớn nhất mà đồ án của bạn chưa giải quyết triệt để là gì? Nếu có thêm 6 tháng nghiên cứu, bạn sẽ nâng cấp hệ thống theo hướng nào?",
+                "text": "Nếu được đánh giá một cách khắt khe và khách quan nhất, hạn chế lớn nhất mà đề tài của bạn chưa giải quyết triệt để là gì và lộ trình nâng cấp trong 6 tháng tới ra sao?",
                 "outline": (
-                    "- Thành thật và tự tin chỉ ra 1 hạn chế kỹ thuật thực sự của đồ án (không giấu giếm khuyết điểm trước hội đồng).\n"
-                    "- Giải thích nguyên nhân khách quan và bài học kinh nghiệm rút ra.\n"
-                    "- Trình bày lộ trình phát triển rõ ràng với 2-3 tính năng nâng cao (AI tự động hóa, Microservices, CI/CD tự động hóa)."
+                    "- Thành thật và tự tin chỉ ra 1 hạn chế cốt lõi của nghiên cứu (không giấu khuyết điểm trước Hội đồng).\n"
+                    "- Phân tích nguyên nhân khách quan và bài học học thuật rút ra.\n"
+                    "- Trình bày lộ trình phát triển rõ ràng với 2-3 nội dung nâng cao cụ thể."
                 ),
                 "chunks": c_p4,
             },
