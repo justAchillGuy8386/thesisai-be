@@ -50,5 +50,33 @@ class PracticeSessionDetailResponse(BaseModel):
 
 
 class UpdateSessionStatusRequest(BaseModel):
-    status: str = Field(..., description="in_progress | completed | cancelled")
+    status: str = Field(..., description="in_progress | completed | partial_failed | cancelled")
+
+
+class QuestionProgressItem(BaseModel):
+    question_id: int
+    order_index: int
+    answer_id: Optional[int] = None
+    processing_status: str = Field(
+        default="unanswered",
+        description="unanswered | queued | transcribing | evaluating | completed | failed",
+    )
+    overall_score: Optional[float] = None
+    error_message: Optional[str] = None
+
+
+class PracticeSessionProgressResponse(BaseModel):
+    session_id: int
+    session_number: int = 1
+    status: str
+    total_questions: int = 0
+    answered_count: int = 0
+    unanswered_count: int = 0
+    queued_count: int = 0
+    processing_count: int = 0
+    completed_count: int = 0
+    failed_count: int = 0
+    has_pending_jobs: bool = False
+    all_answered_finished: bool = True
+    questions: List[QuestionProgressItem] = Field(default_factory=list)
 

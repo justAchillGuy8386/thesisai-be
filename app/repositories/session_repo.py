@@ -3,6 +3,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
 from app.models.session import PracticeSession
 from app.models.question import Question
+from app.models.answer import Answer
 
 
 class SessionRepository:
@@ -31,7 +32,9 @@ class SessionRepository:
         return (
             db.query(PracticeSession)
             .options(
-                joinedload(PracticeSession.questions).joinedload(Question.answer)
+                joinedload(PracticeSession.questions)
+                .joinedload(Question.answer)
+                .joinedload(Answer.evaluation)
             )
             .filter(PracticeSession.id == session_id)
             .first()
@@ -43,7 +46,9 @@ class SessionRepository:
         return (
             db.query(PracticeSession)
             .options(
-                joinedload(PracticeSession.questions).joinedload(Question.answer)
+                joinedload(PracticeSession.questions)
+                .joinedload(Question.answer)
+                .joinedload(Answer.evaluation)
             )
             .filter(
                 PracticeSession.id == session_id,
@@ -87,7 +92,7 @@ class SessionRepository:
         self, db: Session, session: PracticeSession, status: str
     ) -> PracticeSession:
         session.status = status
-        if status in ("completed", "cancelled"):
+        if status in ("completed", "partial_failed", "cancelled"):
             session.ended_at = datetime.utcnow()
         db.commit()
         db.refresh(session)

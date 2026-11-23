@@ -315,9 +315,9 @@ Sinh viên bấm Nộp câu 1
   - *Nguyên tắc đạo đức:* Không phán đoán cảm xúc, sự tự tin hay tính trung thực qua giọng nói; chỉ nhận xét các chỉ số đo đạc khách quan.
 
 #### Tiêu chí hoàn thành:
-- [ ] Ghi âm hoạt động ổn định trên trình duyệt, lưu file audio nghe lại rõ ràng.
-- [ ] API nhận audio phản hồi trong < 500ms, không bắt sinh viên chờ đợi suy luận AI.
-- [ ] Background job hoàn thành tuần tự: STT → Đánh giá → Lưu DB.
+- [x] Ghi âm hoạt động ổn định trên trình duyệt, lưu file audio nghe lại rõ ràng.
+- [x] API nhận audio phản hồi trong < 500ms, không bắt sinh viên chờ đợi suy luận AI.
+- [x] Background job hoàn thành tuần tự: STT → Đánh giá → Lưu DB.
 
 ---
 

@@ -43,6 +43,8 @@ class QuestionResponse(BaseModel):
     source_chunk_ids: List[int] = Field(default_factory=list)
     recommended_seconds: int
     is_answered: bool = False
+    answer_id: Optional[int] = None
+    answer_processing_status: str = "unanswered"
     created_at: datetime
 
     class Config:
